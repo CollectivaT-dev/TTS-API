@@ -1,0 +1,24 @@
+version: '3.7'
+
+services:
+
+  tts:
+    build: .
+    command: gunicorn server:app -b :8000
+    restart: unless-stopped
+    # runtime: nvidia  # Comment out in local
+    ports:
+      - 5050:8000
+    volumes:
+      - .:/app
+    #   - ../translation-models:/app/models
+    environment:
+      - TTS_API_CONFIG=/app/config.json
+      - MODELS_ROOT=/app/models
+    container_name: ttsapi
+    networks:
+      - api-network
+      
+networks:
+  api-network:
+    external: true

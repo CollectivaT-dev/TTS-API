@@ -1,0 +1,12 @@
+{
+    "languages":{"en":"English", "es":"Spanish", "tr":"Turkish", "lad":"Ladino", "xx":"test"},
+    "models": [
+        {
+            "voice": "karen",
+            "lang": "lad",
+            "config_path": "eng_lad_v2_config.json",
+            "model_path": "eng_lad_v2_checkpoint_770000.pth",
+            "load": true
+        }
+    ]
+}

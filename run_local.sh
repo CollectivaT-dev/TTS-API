@@ -1,0 +1,1 @@
+gunicorn server:app -b :5002
