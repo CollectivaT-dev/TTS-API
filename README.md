@@ -1,6 +1,6 @@
-# TTS API
+# Text-to-speech API
 
-This is a simple TTS API based on the 🐸 [Coqui TTS demo server](https://github.com/coqui-ai/TTS/tree/dev/TTS/server). Additional features are:
+This is a simple Text-to-speech (TTS) REST API based on the 🐸 [Coqui TTS demo server](https://github.com/coqui-ai/TTS/tree/dev/TTS/server). Additional features are:
 
 - Loading multiple models at startup
 - Model configuration specification with JSON format file (`config.json`)
