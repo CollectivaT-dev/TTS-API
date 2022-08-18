@@ -23,7 +23,7 @@ To run the API you need to first fetch your models and put them under the direct
 
 ```
 TTS-API
-	↳ ...
+    ↳ ...
     ↳ models
     	↳ my-tts-model.pth
         ↳ my-tts-model.config
