@@ -3,7 +3,7 @@
 This is a simple TTS API based on the 🐸 [Coqui TTS demo server](https://github.com/coqui-ai/TTS/tree/dev/TTS/server). Additional features are:
 
 - Loading multiple models at startup
-- Model configuration specificatino with JSON format file (`config.json`)
+- Model configuration specification with JSON format file (`config.json`)
 - Easy docker installation
 - Modular and language specific text normalization 
 - (Future) Multi-system support	
@@ -39,12 +39,12 @@ Then you need to setup the `config.json` file which contains information about y
     "languages":{"en":"English", "es":"Spanish", "tr":"Turkish", "lad":"Ladino", "ca":"Catalan"}, <--- This is a dictionary mapping language codes to human-readable language name
     "models": [
         {
-            "voice": "karen", 										<--- Name of your voice
-            "lang": "lad",    										<--- Language code
-            "model_type": "coqui",  								<--- TTS system id
-            "tts_config_path": "eng_lad_v2_config.json",			<--- Path to TTS model configuration file 
-            "tts_model_path": "eng_lad_v2_checkpoint_770000.pth",	<--- Path to TTS model checkpoint 
-            "load": true 											<--- Flag to load at startup
+            "voice": "karen",			<--- Name of your voice
+            "lang": "lad", 			<--- Language code
+            "model_type": "coqui",  		<--- TTS system id
+            "tts_config_path": "config.json",	<--- Path to TTS model configuration file 
+            "tts_model_path": "checkpoint.pth",	<--- Path to TTS model checkpoint 
+            "load": true 			<--- Flag to load at startup
         },
         {
             "voice": "pau",
@@ -52,15 +52,15 @@ Then you need to setup the `config.json` file which contains information about y
             "model_type": "coqui",
             "tts_config_path": "pau-config.json",
             "tts_model_path": "pau-tts.pth.tar",
-            "vocoder_config_path": "vocoder-config.json",			<--- Path to Vocoder model configuration file (if you have)
-            "vocoder_model_path": "vocoder-model.pth.tar",			<--- Path to Vocoder checkpoint (if you have)
+            "vocoder_config_path": "vocoder-config.json",	<--- Path to Vocoder model configuration file (if you have)
+            "vocoder_model_path": "vocoder-model.pth.tar",	<--- Path to Vocoder checkpoint (if you have)
             "load": false
         }
     ]
 }
 ```
 
-As for paths, you can place full path or just its filename if it's placed under `models`
+As for paths, you can place full path or just its filename if it's placed under `models`.
 
 ### Run with docker compose (recommended)
 
@@ -76,7 +76,7 @@ docker compose up
 You might want to create a virtual environment before doing this option.
 
 ```
-pip install -r requirements.txt
+pip install -r requirements_local.txt
 gunicorn server:app -b :5050 #or whatever port you like
 ```
 
@@ -95,7 +95,7 @@ curl -L -X GET 'http://localhost:5050/api/tts?text=kaza+maraviyosa&voice=karen' 
 
 ## Demo page
 
-A simple user interface is also available at [http://localhost:5050](http://localhost:5050). If you like a different header, just replace `static/header.png` with an image you like.
+A simple user interface is served at [http://localhost:5050](http://localhost:5050). If you like a different header, just replace `static/header.png` with an image you like.
 
 ![Demo TTS interface](img/default-demo-page.png)
 
