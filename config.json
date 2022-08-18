@@ -4,6 +4,7 @@
         {
             "voice": "karen",
             "lang": "lad",
+            "model_type": "coqui",
             "tts_config_path": "eng_lad_v2_config.json",
             "tts_model_path": "eng_lad_v2_checkpoint_770000.pth",
             "load": true
@@ -11,14 +12,15 @@
         {
             "voice": "pau",
             "lang": "ca",
+            "model_type": "coqui",
             "tts_config_path": "config_pau_speedy_speech_fix.json",
             "tts_model_path": "upc_pau_coqui_speedy_speech.pth.tar",
-
             "load": false
         },
         {
             "voice": "ona",
             "lang": "ca",
+            "model_type": "coqui",
             "tts_config_path": "config.json",
             "tts_model_path": "checkpoint_380000.pth",
             "load": true

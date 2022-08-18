@@ -16,9 +16,9 @@ services:
       - TTS_API_CONFIG=/app/config.json
       - MODELS_ROOT=/app/models
     container_name: ttsapi
-    networks:
-      - api-network
+    # networks:
+    #   - api-network
       
-networks:
-  api-network:
-    external: true
+# networks:
+#   api-network:
+#     external: true

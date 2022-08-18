@@ -5,7 +5,6 @@ from importlib import import_module
 # from TTS.utils.manage import ModelManager ##TODO: This could be enabled to load coqui models without pointing to path
 from TTS.utils.synthesizer import Synthesizer
 
-
 def read_config(config_file):
     """Read JSON format configuration file"""
     with open(config_file, "r") as jsonfile: 
@@ -22,6 +21,47 @@ def load_lang_preprocessor(lang):
         print("WARNING: No preprocessor module found for lang", lang)
         return lambda x: x 
 
+def load_coqui_model(model_data, model_config, models_root="models"):
+    if model_config.get('tts_model_path'):
+        tts_checkpoint_path = os.path.join(models_root, model_config['tts_model_path'])
+        if model_config.get('tts_config_path'):
+            tts_config_path = os.path.join(models_root, model_config['tts_config_path'])
+        else:
+            return False, "No TTS config path specified. Skipping model load"
+    else:
+        return False, "No TTS model path specified. Skipping model load"
+
+    if model_config.get('vocoder_model_path') and model_config.get('vocoder_config_path'):
+        vocoder_checkpoint_path = os.path.join(models_root, model_config['vocoder_model_path'])
+        vocoder_config_path = os.path.join(models_root, model_config['vocoder_config_path'])
+    else:
+        print("WARNING: No Vocoder model or config specified. Loading with default vocoder.")
+        vocoder_checkpoint_path = None
+        vocoder_config_path = None
+
+    #initialize synthesizer
+    try:
+        synthesizer = Synthesizer(
+            tts_checkpoint=tts_checkpoint_path,
+            tts_config_path=tts_config_path,
+            tts_speakers_file=None,
+            tts_languages_file=None,
+            vocoder_checkpoint=vocoder_checkpoint_path,
+            vocoder_config=vocoder_config_path,
+            encoder_checkpoint="",
+            encoder_config="",
+            use_cuda=False,
+        )
+    except:
+        return False, "Cannot initialize model"
+
+    model_data['synthesizer'] = synthesizer
+    model_data['tts_checkpoint_path'] = tts_checkpoint_path
+    model_data['tts_config_path'] = tts_config_path
+    model_data['vocoder_checkpoint_path'] = vocoder_checkpoint_path
+    model_data['vocoder_config_path'] = vocoder_config_path
+
+    return True, "Success"
 
 def load_models(config_data, models_root):
     """Load models into memory"""
@@ -35,51 +75,25 @@ def load_models(config_data, models_root):
         model_data['voice'] = model_id
         
         if model_config['load']:
-            print('Load', model_config['voice'])
-            
-            if model_config.get('tts_model_path'):
-                tts_checkpoint_path = os.path.join(models_root, model_config['tts_model_path'])
-                if model_config.get('tts_config_path'):
-                    tts_config_path = os.path.join(models_root, model_config['tts_config_path'])
-                else:
-                    print("ERROR: No TTS config path specified. Skipping model load")
-                    continue
-            else:
-                print("ERROR: No TTS model path specified. Skipping model load")
-                continue
+            print('Loading', model_config['voice'])
 
-            if model_config.get('vocoder_model_path') and model_config.get('vocoder_config_path'):
-                vocoder_checkpoint_path = os.path.join(models_root, model_config['vocoder_model_path'])
-                vocoder_config_path = os.path.join(models_root, model_config['vocoder_config_path'])
-            else:
-                print("WARNING: No Vocoder model or config specified. Loading with default vocoder.")
-                vocoder_checkpoint_path = None
-                vocoder_config_path = None
-
-            #initialize synthesizer
-            synthesizer = Synthesizer(
-                tts_checkpoint=tts_checkpoint_path,
-                tts_config_path=tts_config_path,
-                tts_speakers_file=None,
-                tts_languages_file=None,
-                vocoder_checkpoint=vocoder_checkpoint_path,
-                vocoder_config=vocoder_config_path,
-                encoder_checkpoint="",
-                encoder_config="",
-                use_cuda=False,
-            )
-            model_data['synthesizer'] = synthesizer
-            model_data['tts_checkpoint_path'] = tts_checkpoint_path
-            model_data['tts_config_path'] = tts_config_path
-            model_data['vocoder_checkpoint_path'] = vocoder_checkpoint_path
-            model_data['vocoder_config_path'] = vocoder_config_path
             model_data['lang'] = model_config.get('lang')
             #TODO: Get proper language name
             if model_data['lang'] in config_data['languages']:
                 model_data['language'] = config_data['languages'][model_data['lang']]
             else:
                 print("WARNING: Full language name not specified in configuration file")
-
+            
+            #Load TTS model (Only Coqui TTS support for now)
+            if model_config['model_type'] == 'coqui':
+                success, message = load_coqui_model(model_data, model_config, models_root)
+                if not success:
+                    print("ERROR:", message)
+                    continue
+            else:
+                print("ERROR: Model type %s is currently not supported. Skipping load."%(model_config['model_type']))
+                continue
+            
             #Load language specific preprocessor (if any)            
             model_data['preprocessor'] = load_lang_preprocessor(model_data['lang'])
 
