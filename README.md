@@ -32,7 +32,9 @@ TTS-API
     ↳ ...
 ```
 
-Then you need to setup the `config.json` file which contains information about your models. An example is provided below with explanations:
+Official Coqui TTS models can be found in their [releases page](https://github.com/coqui-ai/TTS/releases).
+
+Then, you need to setup the `config.json` file which contains information about your models. An example is provided below with explanations:
 
 ```
 {
@@ -87,7 +89,7 @@ or if you have everything already setup
 
 ## API usage
 
-There's currently one API endpoint at `/api/tts`. Text and voice parameters are specified as values. 
+There's currently one API endpoint for synthesis at `/api/tts`. Text and voice parameters are specified as values. 
 
 ```
 curl -L -X GET 'http://localhost:5050/api/tts?text=kaza+maraviyosa&voice=karen' --output maraviyoza.wav
@@ -108,11 +110,11 @@ One usually needs to normalize certain textual expressions into their spoken for
 - Numbers
 - E-mail addresses 
 
-You can specify how these conversions should be done for your language. To do that, 
+You can specify how these conversions should be done for your language by following the procedure:
 
 1. Create a directory named with your language code under `utils/preprocessors`
 2. Create a script called `preprocessor.py` under that directory
 3. Define a function with the name `text_preprocess` inside `preprocessor.py` that takes the input text as input and returns the normalized form.
 
-You can follow the templates we provided for two languages Catalan (`ca`) and Ladino (`lad`). 
+You can also copy the templates we provided for two languages: Catalan (`ca`) and Ladino (`lad`). 
 
