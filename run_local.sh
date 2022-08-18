@@ -1,1 +1,1 @@
-gunicorn server:app -b :5002
+gunicorn server:app -b :5050

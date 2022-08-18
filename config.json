@@ -1,11 +1,26 @@
 {
-    "languages":{"en":"English", "es":"Spanish", "tr":"Turkish", "lad":"Ladino", "xx":"test"},
+    "languages":{"en":"English", "es":"Spanish", "tr":"Turkish", "lad":"Ladino", "ca":"Catalan"},
     "models": [
         {
             "voice": "karen",
             "lang": "lad",
-            "config_path": "eng_lad_v2_config.json",
-            "model_path": "eng_lad_v2_checkpoint_770000.pth",
+            "tts_config_path": "eng_lad_v2_config.json",
+            "tts_model_path": "eng_lad_v2_checkpoint_770000.pth",
+            "load": true
+        },
+        {
+            "voice": "pau",
+            "lang": "ca",
+            "tts_config_path": "config_pau_speedy_speech_fix.json",
+            "tts_model_path": "upc_pau_coqui_speedy_speech.pth.tar",
+
+            "load": false
+        },
+        {
+            "voice": "ona",
+            "lang": "ca",
+            "tts_config_path": "config.json",
+            "tts_model_path": "checkpoint_380000.pth",
             "load": true
         }
     ]
