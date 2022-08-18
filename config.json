@@ -1,5 +1,5 @@
 {
-    "languages":{"en":"English", "es":"Spanish", "tr":"Turkish", "lad":"Ladino", "ca":"Catalan"},
+    "languages":{"en":"English", "es":"Spanish", "tr":"Turkish", "lad":"Ladino", "ca":"Catalan", "gl":"Galician"},
     "models": [
         {
             "voice": "karen",
@@ -22,7 +22,7 @@
             "lang": "ca",
             "model_type": "coqui",
             "tts_config_path": "config.json",
-            "tts_model_path": "checkpoint_380000.pth",
+            "tts_model_path": "checkpoint_400000.pth",
             "load": true
         }
     ]

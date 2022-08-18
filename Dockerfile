@@ -13,7 +13,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip install  --quiet --upgrade pip && \
     pip install  --quiet pip-tools
 
-RUN pip install --no-deps TTS==0.6.2
+RUN pip install --no-deps TTS==0.7.1
 
 COPY ./requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt \
