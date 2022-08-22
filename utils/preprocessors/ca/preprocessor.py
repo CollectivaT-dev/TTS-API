@@ -8,6 +8,9 @@ def canBeNumber(n):
         # Not a number
         return False
 
+# STUB: Function to write out letter (b->be, w->ve doble)
+# def pronounce_letter(letter):
+#     #Source: https://www.cursdecatala.com/es/pronunciar-el-alfabeto-catalan/
 
 def text_preprocess(text):
     text = text.strip()

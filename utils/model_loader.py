@@ -52,8 +52,9 @@ def load_coqui_model(model_data, model_config, models_root="models"):
             encoder_config="",
             use_cuda=False,
         )
-    except:
-        return False, "Cannot initialize model"
+    except Exception as e:
+        return False, "Cannot initialize model (%s)"%(getattr(e, 'message', repr(e))
+)
 
     model_data['synthesizer'] = synthesizer
     model_data['tts_checkpoint_path'] = tts_checkpoint_path
