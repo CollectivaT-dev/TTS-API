@@ -116,5 +116,19 @@ You can specify how these conversions should be done for your language by follow
 2. Create a script called `preprocessor.py` under that directory
 3. Define a function with the name `text_preprocess` inside `preprocessor.py` that takes the input text as input and returns the normalized form.
 
-You can also copy the templates we provided for two languages: Catalan (`ca`) and Ladino (`lad`). 
+If you want to specify different preprocessors for different voices, you can add the field `preprocessor` to your model configution in `config.json` with the name of your preprocessor script. e.g. having `text_preprocess` defined under `utils/preprocessors/xx/my_preprocessor.py`, you need to specify the voice in the config as:
+
+```
+    {
+        "voice": "my-voice",
+        "lang": "xx",
+        "model_type": "coqui",
+        "preprocessor": "my_preprocessor",
+        "tts_config_path": "xx/config.json",
+        "tts_model_path": "xx/model.pth",
+        "load": true
+    }
+```
+
+You can see example preprocessors in the repository.
 
