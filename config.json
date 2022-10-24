@@ -7,7 +7,32 @@
             "model_type": "coqui",
             "tts_config_path": "gl/vits_config.json",
             "tts_model_path": "gl/vits_best_model_52125.pth",
+            "load": false
+        },
+        {
+            "voice": "sabela-phon",
+            "lang": "gl",
+            "model_type": "coqui",
+            "tts_config_path": "gl/vits-phoneme-config.json",
+            "tts_model_path": "gl/vits-phoneme-best_model_51375.pth",
+            "load": false
+        },
+        {
+            "voice": "sabela-phon-accent",
+            "lang": "gl",
+            "model_type": "coqui",
+            "preprocessor": "cotovia_preprocessor",
+            "tts_config_path": "gl/vits-phoneme-accented_config.json",
+            "tts_model_path": "gl/vits-phoneme-accented_best_model_36375.pth",
             "load": true
+        },
+        {
+            "voice": "ona-vits",
+            "lang": "ca",
+            "model_type": "coqui",
+            "tts_config_path": "ca/vits_config.json",
+            "tts_model_path": "ca/vits_best_model_1003724.pth",
+            "load": false
         },
         {
             "voice": "karen",

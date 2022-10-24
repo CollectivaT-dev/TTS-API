@@ -78,7 +78,7 @@ docker compose up
 You might want to create a virtual environment before doing this option.
 
 ```
-pip install -r requirements_local.txt
+pip install -r requirements.txt
 gunicorn server:app -b :5050 #or whatever port you like
 ```
 

@@ -69,11 +69,12 @@ def tts():
         return jsonify({'message':"Voice not found: %s"%voice}), 400
 
     #Preprocess text
-    preprocessed_text = loaded_models[voice]['preprocessor'](text)
-    print("Preprocessed text:", preprocessed_text)
+    if loaded_models[voice]['preprocessor']:
+        text = loaded_models[voice]['preprocessor'](text)
+        print("Preprocessed text:", text)
 
     #wavs = loaded_models[voice]['synthesizer'].tts(preprocessed_text, speaker_name=speaker_idx, style_wav=style_wav)
-    wavs = loaded_models[voice]['synthesizer'].tts(preprocessed_text)
+    wavs = loaded_models[voice]['synthesizer'].tts(text)
     out = io.BytesIO()
     loaded_models[voice]['synthesizer'].save_wav(wavs, out)
     return send_file(out, mimetype="audio/wav")

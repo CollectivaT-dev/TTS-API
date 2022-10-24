@@ -5,6 +5,8 @@ from importlib import import_module
 # from TTS.utils.manage import ModelManager ##TODO: This could be enabled to load coqui models without pointing to path
 from TTS.utils.synthesizer import Synthesizer
 
+DEFAULT_PREPROCESSOR_MODULE = 'preprocessor'
+
 def read_config(config_file):
     """Read JSON format configuration file"""
     with open(config_file, "r") as jsonfile: 
@@ -12,14 +14,14 @@ def read_config(config_file):
         print("Config Read successful") 
     return data
 
-def load_lang_preprocessor(lang):
+def load_lang_preprocessor(lang, preprocessor_module_name='preprocessor'):
     try:
-        preprocessor_module = import_module('utils.preprocessors.' + lang + '.preprocessor')
+        preprocessor_module = import_module('utils.preprocessors.' + lang + '.' + preprocessor_module_name)
         preprocessor = lambda x: preprocessor_module.text_preprocess(x)
         return preprocessor
     except ModuleNotFoundError:
-        print("WARNING: No preprocessor module found for lang", lang)
-        return lambda x: x 
+        print("WARNING: Couldn't load preprocessor", preprocessor_module_name, 'for lang', lang)
+        return None
 
 def load_coqui_model(model_data, model_config, models_root="models"):
     if model_config.get('tts_model_path'):
@@ -95,8 +97,9 @@ def load_models(config_data, models_root):
                 print("ERROR: Model type %s is currently not supported. Skipping load."%(model_config['model_type']))
                 continue
             
-            #Load language specific preprocessor (if any)            
-            model_data['preprocessor'] = load_lang_preprocessor(model_data['lang'])
+            #Load language specific preprocessor (if any)
+            preprocessor_module_name = model_config['preprocessor'] if 'preprocessor' in model_config else DEFAULT_PREPROCESSOR_MODULE
+            model_data['preprocessor'] = load_lang_preprocessor(model_data['lang'], preprocessor_module_name)
 
             #Save model to loaded_models
             loaded_models[model_id] = model_data
