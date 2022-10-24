@@ -5,7 +5,7 @@ import subprocess
 COTOVIA_IN_TXT_PATH = 'text.txt'
 COTOVIA_OUT_TRA_PATH = 'text.tra'
 
-PUNCLIST = [';', '?', '¿', ',', ':', '.', '!', '¡', '-']
+PUNCLIST = [';', '?', '¿', ',', ':', '.', '!', '¡']
 
 SIMULATE_COTOVIA = False
 
