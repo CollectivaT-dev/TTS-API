@@ -1,3 +1,7 @@
+# Dockerfile for running Galician TTS with phoneme preprocessing
+# Prerequisite: download appropriate cotovia deb packages to <project-dir>/deb
+# https://sourceforge.net/projects/cotovia/files/Debian%20packages/
+
 FROM python:3.7.9-slim-buster
 
 # Project setup
@@ -15,6 +19,9 @@ RUN pip install  --quiet --upgrade pip && \
     pip install  --quiet pip-tools
 
 COPY . /app
+
+RUN dpkg -i /app/deb/cotovia_0.5_amd64.deb  #or cotovia_0.5_i386.deb depending on your architecture
+RUN dpkg -i /app/deb/cotovia-lang-gl_0.5_all.deb
 
 RUN pip install -r /app/requirements.txt \
     && rm -rf /root/.cache/pip
