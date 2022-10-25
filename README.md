@@ -138,9 +138,17 @@ You can see example preprocessors in the repository.
 
 If you're using a phonetic model that depends on Cotovia library, you need to make sure:
 
-1. Have `amd64` or `i386` architecture
+1. Have a processor with `amd64` or `i386` architecture
 2. Download binary packages `cotovia_0.5_<arch>.deb` and `cotovia-lang-gl_0.5_all.deb` to `/deb` from https://sourceforge.net/projects/cotovia/files/Debian%20packages/ 
-3. Use the corresponding `Dockerfile` that installs them. You can execute the following commands to do that:
+
+Then if you're running locally on a debian based machine, install cotovia manually using the commands:
+
+```
+dpkg -i deb/cotovia_0.5_amd64.deb
+dpkg -i /app/deb/cotovia-lang-gl_0.5_all.deb
+```
+
+If you prefer to run with docker, use the corresponding `Dockerfile` that installs them. You can execute the following commands to do that:
 
 ```
 mv Dockerfile Dockerfile-nogl
