@@ -132,3 +132,34 @@ If you want to specify different preprocessors for different voices, you can add
 
 You can see example preprocessors in the repository.
 
+## Languages
+
+### Galician
+
+If you're using a phonetic model that depends on Cotovia library, you need to make sure:
+
+1. Have a processor with `amd64` or `i386` architecture
+2. Create an empty directory with name `deb` in the project directory
+3. Download binary packages `cotovia_0.5_<arch>.deb` and `cotovia-lang-gl_0.5_all.deb` to `deb` directory from https://sourceforge.net/projects/cotovia/files/Debian%20packages/ 
+
+Then if you're running locally on a debian based machine, install cotovia manually using the commands:
+
+```
+dpkg -i deb/cotovia_0.5_amd64.deb
+dpkg -i deb/cotovia-lang-gl_0.5_all.deb
+```
+
+If you prefer to run with docker, use the corresponding `Dockerfile` that installs them. You can execute the following commands to do that:
+
+```
+mv Dockerfile Dockerfile-nogl
+mv docker/Dockerfile-gl-cotovia Dockerfile
+```
+
+### Ladino
+
+Models available in [Ladino Data Hub](https://data.sefarad.com.tr/dataset/tts-training-dataset)
+
+### Catalan
+
+_Soon_
