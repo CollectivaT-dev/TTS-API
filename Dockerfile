@@ -20,3 +20,5 @@ RUN pip install -r /app/requirements.txt \
     && rm -rf /root/.cache/pip
 
 WORKDIR /app
+
+ENV PYTHONUNBUFFERED=1

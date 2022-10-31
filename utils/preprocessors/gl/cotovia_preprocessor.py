@@ -35,7 +35,7 @@ def to_cotovia(text_segments):
     if SIMULATE_COTOVIA:
         subprocess.run(["bash", "./utils/preprocessors/gl/fake_cotovia.sh", COTOVIA_IN_TXT_PATH])
     else:
-        subprocess.run(["cotovia", "-i", COTOVIA_IN_TXT_PATH, "-t1", "-n"])
+        subprocess.run(["cotovia", "-i", COTOVIA_IN_TXT_PATH, "-t1", "-n"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     segs = []
     try:
