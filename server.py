@@ -11,11 +11,13 @@ from utils.model_loader import read_config, load_models
 
 MODELS_ROOT = 'models'
 CONFIG_JSON_PATH = os.getenv('TTS_API_CONFIG') if os.getenv('TTS_API_CONFIG') else 'config.json'
+USE_CUDA = True if os.getenv('USE_CUDA')=="1" else False
 COQUI_CONFIG_JSON_PATH = "coqui-models.json"
 
 #load config and models
 config_data = read_config(CONFIG_JSON_PATH)
-loaded_models = load_models(config_data, MODELS_ROOT)
+print("USE_CUDA", USE_CUDA)
+loaded_models = load_models(config_data, MODELS_ROOT, USE_CUDA)
 print("MODELS DICT\n", loaded_models)
 
 app = Flask(__name__)

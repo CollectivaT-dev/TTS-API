@@ -31,8 +31,8 @@
             "lang": "gl",
             "model_type": "coqui",
             "preprocessor": "cotovia_preprocessor_tra3",
-            "tts_config_path": "gl/vits_galotron_phon_accented_tra3_config.json",
-            "tts_model_path": "gl/vits_galotron_phon_accented_tra3_best_model_70875.pth",
+            "tts_config_path": "gl/vits-phoneme-transfer-config.json",
+            "tts_model_path": "gl/vits-phoneme-transfer-best_model_1004501.pth",
             "load": true
         },
         {

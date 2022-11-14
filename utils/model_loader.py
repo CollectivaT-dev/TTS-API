@@ -23,7 +23,7 @@ def load_lang_preprocessor(lang, preprocessor_module_name='preprocessor'):
         print("WARNING: Couldn't load preprocessor", preprocessor_module_name, 'for lang', lang)
         return None
 
-def load_coqui_model(model_data, model_config, models_root="models"):
+def load_coqui_model(model_data, model_config, models_root="models", use_cuda=False):
     if model_config.get('tts_model_path'):
         tts_checkpoint_path = os.path.join(models_root, model_config['tts_model_path'])
         if model_config.get('tts_config_path'):
@@ -52,7 +52,7 @@ def load_coqui_model(model_data, model_config, models_root="models"):
             vocoder_config=vocoder_config_path,
             encoder_checkpoint="",
             encoder_config="",
-            use_cuda=False,
+            use_cuda=use_cuda,
         )
     except Exception as e:
         return False, "Cannot initialize model (%s)"%(getattr(e, 'message', repr(e))
@@ -66,7 +66,7 @@ def load_coqui_model(model_data, model_config, models_root="models"):
 
     return True, "Success"
 
-def load_models(config_data, models_root):
+def load_models(config_data, models_root, use_cuda=False):
     """Load models into memory"""
     loaded_models = {}
 
@@ -89,7 +89,7 @@ def load_models(config_data, models_root):
             
             #Load TTS model (Only Coqui TTS support for now)
             if model_config['model_type'] == 'coqui':
-                success, message = load_coqui_model(model_data, model_config, models_root)
+                success, message = load_coqui_model(model_data, model_config, models_root, use_cuda)
                 if not success:
                     print("ERROR:", message)
                     continue
