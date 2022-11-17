@@ -73,7 +73,7 @@ def tts():
     #Preprocess text
     if loaded_models[voice]['preprocessor']:
         text = loaded_models[voice]['preprocessor'](text)
-        print("Preprocessed text:", text)
+        print("> Preprocessed text:", text)
 
     #wavs = loaded_models[voice]['synthesizer'].tts(preprocessed_text, speaker_name=speaker_idx, style_wav=style_wav)
     wavs = loaded_models[voice]['synthesizer'].tts(text)

@@ -38,7 +38,10 @@ def remove_tra3_tags(phontrans):
 def to_cotovia(text_segments, tra3=TRA3):
     with open(COTOVIA_IN_TXT_PATH, 'w') as f:
         for seg in text_segments:
-            f.write(seg + '\n')
+            if seg:
+                f.write(seg + '\n')
+            else:
+                f.write(',' + '\n')
 
     if SIMULATE_COTOVIA:
         subprocess.run(["bash", "./utils/preprocessors/gl/fake_cotovia.sh", COTOVIA_IN_TXT_PATH])
@@ -55,6 +58,8 @@ def to_cotovia(text_segments, tra3=TRA3):
                 segs = [remove_tra3_tags(line) for line in segs]
     except:
         print("ERROR: Couldn't read cotovia output")
+
+
   
     return segs
 
@@ -86,11 +91,8 @@ def merge_punc(text_segs, puncs):
 
 
 def text_preprocess(text):
-
     #Split from punc
     text_segments, puncs = split_punc(text)
-    print('text_segments', text_segments)
-    print('puncs', puncs)
 
     cotovia_phon_segs = to_cotovia(text_segments)
 
