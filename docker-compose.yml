@@ -6,16 +6,22 @@ services:
     build: .
     command: gunicorn server:app -b :8000 --workers 2 --threads=4 --worker-class=gthread 
     restart: unless-stopped
-    # runtime: nvidia  # Comment out in local
     ports:
       - 5050:8000
     volumes:
       - .:/app
-    #   - ../translation-models:/app/models
     environment:
       - TTS_API_CONFIG=/app/config.json
       - MODELS_ROOT=/app/models
+      - USE_CUDA=0
     container_name: ttsapi
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     # networks:
     #   - api-network
       
