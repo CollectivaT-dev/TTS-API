@@ -14,7 +14,7 @@ services:
     environment:
       - TTS_API_CONFIG=/app/config.json
       - MODELS_ROOT=/app/models
-      - USE_CUDA=1  #1 to enable GPU inference
+      - USE_CUDA=0  #1 to enable GPU inference
     #Remove comment below to enable GPU inference
     # deploy:
     #   resources:
