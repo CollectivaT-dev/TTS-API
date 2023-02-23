@@ -97,7 +97,7 @@ You can enable GPU for inference both running locally or with docker.
 Make the following changes in `docker-compose.yml`
 
 - Set `USE_CUDA` flag to 1
-- Remove comments on nvidia driver setup ([for more information])
+- Remove comments on nvidia driver setup ([consult here for more information](https://docs.docker.com/compose/gpu-support/))
 ```
 ...
       - USE_CUDA=1  #1 to enable GPU inference
