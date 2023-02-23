@@ -5,6 +5,7 @@ This is a simple Text-to-speech (TTS) REST API based on the 🐸 [Coqui TTS demo
 - Loading multiple models at startup
 - Model configuration specification with JSON format file (`config.json`)
 - Easy docker installation
+- GPU compatibility
 - Modular and language specific text normalization 
 - (Future) Multi-system support	
 	- Coqui TTS
