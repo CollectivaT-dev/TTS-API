@@ -10,11 +10,11 @@ services:
       - 5050:8000
     volumes:
       - .:/app
+    container_name: ttsapi
     environment:
       - TTS_API_CONFIG=/app/config.json
       - MODELS_ROOT=/app/models
       - USE_CUDA=0  #1 to enable GPU inference
-    container_name: ttsapi
     #Remove comment below to enable GPU inference
     # deploy:
     #   resources:
@@ -24,7 +24,7 @@ services:
     #           count: 1
     #           capabilities: [gpu]
     #Remove comment above to enable GPU inference
-    
+
     # networks:
     #   - api-network
       
