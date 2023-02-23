@@ -87,6 +87,35 @@ or if you have everything already setup
 ./run_local.sh
 ```
 
+### GPU inference
+
+You can enable GPU for inference both running locally or with docker. 
+
+#### Enabling GPU on docker
+
+Make the following changes in `docker-compose.yml`
+
+- Set `USE_CUDA` flag to 1
+- Remove comments on nvidia driver setup ([for more information])
+```
+...
+      - USE_CUDA=1  #1 to enable GPU inference
+    #Remove comment below to enable GPU inference
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1 #set to "all" to use all GPUs
+              capabilities: [gpu]
+    #Remove comment above to enable GPU inference
+...
+```
+
+#### Enabling GPU on local run
+
+In `run_local.sh` set the `USE_CUDA` flag to 1
+
 ## API usage
 
 There's currently one API endpoint for synthesis at `/api/tts`. Text and voice parameters are specified as values. 
