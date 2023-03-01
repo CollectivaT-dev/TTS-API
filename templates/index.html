@@ -77,7 +77,7 @@
                 <select id="speaker_id" name=speaker_id method="GET" action="/">
                     {% for key, value in voices.items() %}
                     <!-- <option value="{{speaker_id}}" SELECTED>{{speaker_id}}</option>" -->
-                    <option value="{{key}} ({{voices[key]}})" SELECTED>{{key}} ({{voices[key]}})</option>"
+                    <option value="{{key}} ({{voices[key]}})">{{key}} ({{voices[key]}})</option>"
                     {% endfor %}
                 </select><br /><br />
                 {%endif%}
