@@ -5,11 +5,15 @@ This is a simple Text-to-speech (TTS) REST API based on the 🐸 [Coqui TTS demo
 - Loading multiple models at startup
 - Model configuration specification with JSON format file (`config.json`)
 - Easy docker installation
-- GPU compatibility
+- CPU and GPU compatibility
 - Modular and language specific text normalization 
 - (Future) Multi-system support	
 	- Coqui TTS
-	- ???
+	- Larynx (coming soon)
+	
+## Demo
+
+A demo app with Catalan, Galician and Ladino models is available at http://catotron.collectivat.cat. 
 
 ## Setup and installation
 
@@ -192,4 +196,5 @@ Models available in [Ladino Data Hub](https://data.sefarad.com.tr/dataset/tts-tr
 
 ### Catalan
 
-_Soon_
+- [Catotron Ona](https://g4e5.c13.e2-2.dev/dataset-share/catotron-ona-fast-speech-v0.2.zip) (trained with UPC's [festcat dataset](http://festcat.talp.cat/download.php)) 
+- Catotron Pau (coming soon)
