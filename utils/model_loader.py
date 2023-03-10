@@ -69,6 +69,7 @@ def load_coqui_model(model_data, model_config, models_root="models", use_cuda=Fa
 def load_models(config_data, models_root, use_cuda=False):
     """Load models into memory"""
     loaded_models = {}
+    default_model_ids = {}
 
     # global synthesizer
     for model_config in config_data['models']:
@@ -104,10 +105,15 @@ def load_models(config_data, models_root, use_cuda=False):
             #Save model to loaded_models
             loaded_models[model_id] = model_data
 
+            #Determine if model is default model for language
+            if model_config.get('defualt_for_lang') or model_data['lang'] not in default_model_ids:
+                default_model_ids[model_data['lang']] = model_data['voice']
+
+
             #TODO: This part is probably needed for multispeaker models. Not implementing as it's not needed for now
             # loaded_models[model_id]['use_multi_speaker'] = hasattr(synthesizer.tts_model, "num_speakers") and synthesizer.tts_model.num_speakers > 1
             # loaded_models[model_id]['speaker_manager'] = getattr(synthesizer.tts_model, "speaker_manager", None)
             # # TODO: set this from SpeakerManager
             # loaded_models[model_id]['use_gst'] = synthesizer.tts_config.get("use_gst", False)
 
-    return loaded_models
+    return loaded_models, default_model_ids

@@ -2,7 +2,15 @@
     "languages":{"en":"English", "es":"Spanish", "tr":"Turkish", "lad":"Ladino", "ca":"Catalan", "gl":"Galician"},
     "models": [
         {
-            "voice": "sabela",
+            "voice": "sabela-glow-morph",
+            "lang": "gl",
+            "model_type": "coqui",
+            "tts_config_path": "gl/vits_config.json",
+            "tts_model_path": "gl/vits_best_model_52125.pth",
+            "load": false
+        },
+        {
+            "voice": "sabela-morph",
             "lang": "gl",
             "model_type": "coqui",
             "tts_config_path": "gl/vits_config.json",
@@ -21,19 +29,36 @@
             "voice": "sabela-phon-accent",
             "lang": "gl",
             "model_type": "coqui",
-            "preprocessor": "cotovia_preprocessor",
             "tts_config_path": "gl/vits-phoneme-accented_config.json",
             "tts_model_path": "gl/vits-phoneme-accented_best_model_36375.pth",
-            "load": true
+            "load": false
         },
-	{
-            "voice": "sabela-phon-accent-tra3",
+	    {
+            "voice": "sabela-vits_transfer-tra3",
             "lang": "gl",
             "model_type": "coqui",
-            "preprocessor": "cotovia_preprocessor_tra3",
             "tts_config_path": "gl/vits-phoneme-transfer-config.json",
             "tts_model_path": "gl/vits-phoneme-transfer-best_model_1004501.pth",
-            "load": true
+            "load": false
+        },
+        
+        {
+            "voice": "sabela-vits-tra3commafix",
+            "lang": "gl",
+            "model_type": "coqui",
+            "tts_config_path": "gl/vits-phoneme-tra3commafix_config.json",
+            "tts_model_path": "gl/vits-phoneme-tra3commafix_best_model_57828.pth",
+            "load": false
+        },
+        {
+            "voice": "sabela-fast-tra3-hifigan",
+            "lang": "gl",
+            "model_type": "coqui",
+            "tts_config_path": "gl/fast-pitch_config.json",
+            "tts_model_path": "gl/fast-pitch_best_model_362340.pth",
+            "vocoder_config_path": "/Users/alp/Library/Application Support/TTS/vocoder_models--en--ljspeech--hifigan_v2/config.json",
+            "vocoder_model_path": "/Users/alp/Library/Application Support/TTS/vocoder_models--en--ljspeech--hifigan_v2/model_file.pth",
+            "load": false
         },
         {
             "voice": "ona-vits",
@@ -49,6 +74,8 @@
             "model_type": "coqui",
             "tts_config_path": "lad/eng_lad_v2_config.json",
             "tts_model_path": "lad/eng_lad_v2_checkpoint_770000.pth",
+            "vocoder_config_path": "/Users/alp/Library/Application Support/TTS/vocoder_models--en--ljspeech--hifigan_v2/config.json",
+            "vocoder_model_path": "/Users/alp/Library/Application Support/TTS/vocoder_models--en--ljspeech--hifigan_v2/model_file.pth",
             "load": false
         },
         {
@@ -76,19 +103,31 @@
             "load": false
         },
         {
-            "voice": "ona-fastfull",
+            "voice": "ona-fast-hifigan",
             "lang": "ca",
             "model_type": "coqui",
             "tts_config_path": "ca/fast-speech_config.json",
             "tts_model_path": "ca/fast-speech_best_model.pth",
+            "vocoder_config_path": "ca/ljspeech--hifigan_v2_config.json",
+            "vocoder_model_path": "ca/ljspeech--hifigan_v2_model_file.pth",
+            "load": true
+        },
+        {
+            "voice": "ona-fast-onavoc",
+            "lang": "ca",
+            "model_type": "coqui",
+            "tts_config_path": "ca/fast-speech_config.json",
+            "tts_model_path": "ca/fast-speech_best_model.pth",
+            "vocoder_config_path": "ca/onavoc_config.json",
+            "vocoder_model_path": "ca/onavoc_best_model_26136.pth",
             "load": false
         },
         {
-            "voice": "ona-tacotron2",
+            "voice": "ona-vits-fromCV",
             "lang": "ca",
             "model_type": "coqui",
-            "tts_config_path": "ca/tacotron2_config.json",
-            "tts_model_path": "ca/tacotron2_checkpoint_340000.pth",
+            "tts_config_path": "ca/vits_fromCV_config.json",
+            "tts_model_path": "ca/vits_fromCV_best_model_761185.pth",
             "load": false
         },
         {

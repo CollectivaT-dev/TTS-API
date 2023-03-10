@@ -1,7 +1,9 @@
 import os
 import json
 from typing import Union
+import string
 
+ENDING_PUNCTUATION = ["?", ".", "!"] #TODO: Latin only
 
 def style_wav_uri_to_dict(style_wav: str) -> Union[str, dict]:
     """Transform an uri style_wav, in either a string (path to wav file to be use for style transfer)
@@ -21,3 +23,11 @@ def style_wav_uri_to_dict(style_wav: str) -> Union[str, dict]:
         return style_wav  # style_wav is a gst dictionary with {token1_id : token1_weigth, ...}
     return None
 
+def universal_text_normalize(text: str):
+    if all(x in string.punctuation for x in text):
+        return ""
+    text = text.strip()
+    if not text[-1] in ENDING_PUNCTUATION:
+        text = text + "."
+
+    return text
