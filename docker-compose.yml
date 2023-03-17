@@ -4,18 +4,27 @@ services:
 
   tts:
     build: .
-    command: gunicorn server:app -b :8000
+    command: gunicorn server:app -b :8000 --workers 2 --threads=4 --worker-class=gthread 
     restart: unless-stopped
-    # runtime: nvidia  # Comment out in local
     ports:
       - 5050:8000
     volumes:
       - .:/app
-    #   - ../translation-models:/app/models
+    container_name: ttsapi
     environment:
       - TTS_API_CONFIG=/app/config.json
       - MODELS_ROOT=/app/models
-    container_name: ttsapi
+      - USE_CUDA=0  #1 to enable GPU inference
+    #Remove comment below to enable GPU inference
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1 #set to "all" to use all GPUs
+    #           capabilities: [gpu]
+    #Remove comment above to enable GPU inference
+
     # networks:
     #   - api-network
       

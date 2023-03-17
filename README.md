@@ -5,10 +5,15 @@ This is a simple Text-to-speech (TTS) REST API based on the 🐸 [Coqui TTS demo
 - Loading multiple models at startup
 - Model configuration specification with JSON format file (`config.json`)
 - Easy docker installation
+- CPU and GPU compatibility
 - Modular and language specific text normalization 
 - (Future) Multi-system support	
 	- Coqui TTS
-	- ???
+	- Larynx (coming soon)
+	
+## Demo
+
+A demo app with Catalan, Galician and Ladino models is available at http://catotron.collectivat.cat. 
 
 ## Setup and installation
 
@@ -78,7 +83,7 @@ docker compose up
 You might want to create a virtual environment before doing this option.
 
 ```
-pip install -r requirements_local.txt
+pip install -r requirements.txt
 gunicorn server:app -b :5050 #or whatever port you like
 ```
 
@@ -86,6 +91,35 @@ or if you have everything already setup
 ```
 ./run_local.sh
 ```
+
+### GPU inference
+
+You can enable GPU for inference both running locally or with docker. 
+
+#### Enabling GPU on docker
+
+Make the following changes in `docker-compose.yml`
+
+- Set `USE_CUDA` flag to 1
+- Remove comments on nvidia driver setup ([consult here for more information](https://docs.docker.com/compose/gpu-support/))
+```
+...
+      - USE_CUDA=1  #1 to enable GPU inference
+    #Remove comment below to enable GPU inference
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1 #set to "all" to use all GPUs
+              capabilities: [gpu]
+    #Remove comment above to enable GPU inference
+...
+```
+
+#### Enabling GPU on local run
+
+In `run_local.sh` set the `USE_CUDA` flag to 1
 
 ## API usage
 
@@ -116,5 +150,51 @@ You can specify how these conversions should be done for your language by follow
 2. Create a script called `preprocessor.py` under that directory
 3. Define a function with the name `text_preprocess` inside `preprocessor.py` that takes the input text as input and returns the normalized form.
 
-You can also copy the templates we provided for two languages: Catalan (`ca`) and Ladino (`lad`). 
+If you want to specify different preprocessors for different voices, you can add the field `preprocessor` to your model configution in `config.json` with the name of your preprocessor script. e.g. having `text_preprocess` defined under `utils/preprocessors/xx/my_preprocessor.py`, you need to specify the voice in the config as:
 
+```
+    {
+        "voice": "my-voice",
+        "lang": "xx",
+        "model_type": "coqui",
+        "preprocessor": "my_preprocessor",
+        "tts_config_path": "xx/config.json",
+        "tts_model_path": "xx/model.pth",
+        "load": true
+    }
+```
+
+You can see example preprocessors in the repository.
+
+## Languages
+
+### Galician
+
+If you're using a phonetic model that depends on Cotovia library, you need to make sure:
+
+1. Have a processor with `amd64` or `i386` architecture
+2. Create an empty directory with name `deb` in the project directory
+3. Download binary packages `cotovia_0.5_<arch>.deb` and `cotovia-lang-gl_0.5_all.deb` to `deb` directory from https://sourceforge.net/projects/cotovia/files/Debian%20packages/ 
+
+Then if you're running locally on a debian based machine, install cotovia manually using the commands:
+
+```
+dpkg -i deb/cotovia_0.5_amd64.deb
+dpkg -i deb/cotovia-lang-gl_0.5_all.deb
+```
+
+If you prefer to run with docker, use the corresponding `Dockerfile` that installs them. You can execute the following commands to do that:
+
+```
+mv Dockerfile Dockerfile-nogl
+mv docker/Dockerfile-gl-cotovia Dockerfile
+```
+
+### Ladino
+
+Models available in [Ladino Data Hub](https://data.sefarad.com.tr/dataset/tts-training-dataset)
+
+### Catalan
+
+- [Catotron Ona](https://g4e5.c13.e2-2.dev/dataset-share/catotron-ona-fast-speech-v0.2.zip) (trained with UPC's [festcat dataset](http://festcat.talp.cat/download.php)) 
+- Catotron Pau (coming soon)

@@ -5,6 +5,8 @@ from importlib import import_module
 # from TTS.utils.manage import ModelManager ##TODO: This could be enabled to load coqui models without pointing to path
 from TTS.utils.synthesizer import Synthesizer
 
+DEFAULT_PREPROCESSOR_MODULE = 'preprocessor'
+
 def read_config(config_file):
     """Read JSON format configuration file"""
     with open(config_file, "r") as jsonfile: 
@@ -12,16 +14,16 @@ def read_config(config_file):
         print("Config Read successful") 
     return data
 
-def load_lang_preprocessor(lang):
+def load_lang_preprocessor(lang, preprocessor_module_name='preprocessor'):
     try:
-        preprocessor_module = import_module('utils.preprocessors.' + lang + '.preprocessor')
+        preprocessor_module = import_module('utils.preprocessors.' + lang + '.' + preprocessor_module_name)
         preprocessor = lambda x: preprocessor_module.text_preprocess(x)
         return preprocessor
     except ModuleNotFoundError:
-        print("WARNING: No preprocessor module found for lang", lang)
-        return lambda x: x 
+        print("WARNING: Couldn't load preprocessor", preprocessor_module_name, 'for lang', lang)
+        return None
 
-def load_coqui_model(model_data, model_config, models_root="models"):
+def load_coqui_model(model_data, model_config, models_root="models", use_cuda=False):
     if model_config.get('tts_model_path'):
         tts_checkpoint_path = os.path.join(models_root, model_config['tts_model_path'])
         if model_config.get('tts_config_path'):
@@ -50,7 +52,7 @@ def load_coqui_model(model_data, model_config, models_root="models"):
             vocoder_config=vocoder_config_path,
             encoder_checkpoint="",
             encoder_config="",
-            use_cuda=False,
+            use_cuda=use_cuda,
         )
     except Exception as e:
         return False, "Cannot initialize model (%s)"%(getattr(e, 'message', repr(e))
@@ -64,9 +66,10 @@ def load_coqui_model(model_data, model_config, models_root="models"):
 
     return True, "Success"
 
-def load_models(config_data, models_root):
+def load_models(config_data, models_root, use_cuda=False):
     """Load models into memory"""
     loaded_models = {}
+    default_model_ids = {}
 
     # global synthesizer
     for model_config in config_data['models']:
@@ -87,7 +90,7 @@ def load_models(config_data, models_root):
             
             #Load TTS model (Only Coqui TTS support for now)
             if model_config['model_type'] == 'coqui':
-                success, message = load_coqui_model(model_data, model_config, models_root)
+                success, message = load_coqui_model(model_data, model_config, models_root, use_cuda)
                 if not success:
                     print("ERROR:", message)
                     continue
@@ -95,11 +98,17 @@ def load_models(config_data, models_root):
                 print("ERROR: Model type %s is currently not supported. Skipping load."%(model_config['model_type']))
                 continue
             
-            #Load language specific preprocessor (if any)            
-            model_data['preprocessor'] = load_lang_preprocessor(model_data['lang'])
+            #Load language specific preprocessor (if any)
+            preprocessor_module_name = model_config['preprocessor'] if 'preprocessor' in model_config else DEFAULT_PREPROCESSOR_MODULE
+            model_data['preprocessor'] = load_lang_preprocessor(model_data['lang'], preprocessor_module_name)
 
             #Save model to loaded_models
             loaded_models[model_id] = model_data
+
+            #Determine if model is default model for language
+            if model_config.get('defualt_for_lang') or model_data['lang'] not in default_model_ids:
+                default_model_ids[model_data['lang']] = model_data['voice']
+
 
             #TODO: This part is probably needed for multispeaker models. Not implementing as it's not needed for now
             # loaded_models[model_id]['use_multi_speaker'] = hasattr(synthesizer.tts_model, "num_speakers") and synthesizer.tts_model.num_speakers > 1
@@ -107,4 +116,4 @@ def load_models(config_data, models_root):
             # # TODO: set this from SpeakerManager
             # loaded_models[model_id]['use_gst'] = synthesizer.tts_config.get("use_gst", False)
 
-    return loaded_models
+    return loaded_models, default_model_ids
