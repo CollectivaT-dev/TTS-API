@@ -6,6 +6,7 @@ from importlib import import_module
 from TTS.utils.synthesizer import Synthesizer
 
 DEFAULT_PREPROCESSOR_MODULE = 'preprocessor'
+DEFAULT_FRAMERATE = 22050
 
 def read_config(config_file):
     """Read JSON format configuration file"""
@@ -63,6 +64,7 @@ def load_coqui_model(model_data, model_config, models_root="models", use_cuda=Fa
     model_data['tts_config_path'] = tts_config_path
     model_data['vocoder_checkpoint_path'] = vocoder_checkpoint_path
     model_data['vocoder_config_path'] = vocoder_config_path
+    model_data['framerate'] = synthesizer.output_sample_rate
 
     return True, "Success"
 
@@ -81,8 +83,10 @@ def load_models(config_data, models_root, use_cuda=False):
         if model_config['load']:
             print('Loading', model_config['voice'])
 
+            #Get language code
             model_data['lang'] = model_config.get('lang')
-            #TODO: Get proper language name
+
+            #Get language name
             if model_data['lang'] in config_data['languages']:
                 model_data['language'] = config_data['languages'][model_data['lang']]
             else:
