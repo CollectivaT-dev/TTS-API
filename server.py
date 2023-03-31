@@ -16,8 +16,9 @@ COQUI_CONFIG_JSON_PATH = "coqui-models.json"
 
 #load config and models
 config_data = read_config(CONFIG_JSON_PATH)
-print("USE_CUDA", USE_CUDA)
 loaded_models, default_model_ids = load_models(config_data, MODELS_ROOT, USE_CUDA)
+
+print("USE_CUDA", USE_CUDA)
 print("MODELS DICT\n", loaded_models)
 print("DEFAULT MODELS\n", default_model_ids)
 
@@ -57,6 +58,49 @@ def details():
         args=model,
     )
 
+@app.route("/api/tts/voices", methods=["GET"])
+def list_voices():
+    voices_by_lang = {}
+    for model_id in loaded_models:
+        lang = loaded_models[model_id]['lang']
+        if lang not in voices_by_lang:
+            voices_by_lang[lang] = {'name':loaded_models[model_id]['language'], 'voices':{}}
+        voices_by_lang[lang]['voices'][model_id] = {'default': True if default_model_ids[lang] == model_id else False,
+                                                    'framerate': loaded_models[model_id]['framerate']}
+
+    return voices_by_lang, 200
+
+@app.route("/api/tts/check", methods=["GET"])
+def check(voice=None, lang=None):
+    if not voice and not lang:
+        voice = request.args.get("voice")
+        lang = request.args.get("lang")
+
+    if voice:
+        #Check if voice is loaded
+        if not voice in loaded_models:
+            print(f"REQUEST ERROR: Voice {voice} not found")
+            return jsonify({'message':f"Voice {voice} not found"}), 400
+
+        if lang:
+            #Check if voice is in lang if both are specified
+            if not loaded_models[voice]['lang'] == lang:
+                print(f"REQUEST ERROR: Voice {voice} is not in specified lang {lang}")
+                return jsonify({'message':f"Voice {voice} is not in speficied lang {lang}"}), 400
+    elif lang:
+        #Get default voice for language
+        if lang in default_model_ids:
+            voice = default_model_ids[lang]
+            print(f" > Default voice: {voice}")
+        else:
+            print(f"REQUEST ERROR: No model for language {lang}")
+            return jsonify({'message':f"No model for language {lang}"}), 400
+    else:
+        print(f"REQUEST ERROR: Request must specify voice or language")
+        return jsonify({'message':f"Request must specify voice or language"}), 400
+
+    return {"voice": voice, "framerate": loaded_models[voice]['framerate']}, 200
+
 @app.route("/api/tts", methods=["GET"])
 def tts():
     text = request.args.get("text")
@@ -73,28 +117,12 @@ def tts():
         print(f"REQUEST ERROR: Text must not be empty")
         return jsonify({'message':f"Text must not be empty"}), 400
 
-    if voice:
-        #Check if voice is loaded
-        if not voice in loaded_models:
-            print(f"REQUEST ERROR: Voice {voice} not found")
-            return jsonify({'message':f"Voice {voice} not found"}), 400
+    r, status = check(voice, lang)
 
-        if lang:
-            #Check if voice is in lang
-            if not loaded_models[voice]['lang'] == lang:
-                print(f"REQUEST ERROR: Voice {voice} is not in specified lang {lang}")
-                return jsonify({'message':f"Voice {voice} is not in speficied lang {lang}"}), 400
-    elif lang:
-        #Get default voice for language
-        if lang in default_model_ids:
-            voice = default_model_ids[lang]
-            print(f" > Default voice: {voice}")
-        else:
-            print(f"REQUEST ERROR: No model for language {lang}")
-            return jsonify({'message':f"No model for language {lang}"}), 400
-    else:
-        print(f"REQUEST ERROR: Request must specify voice or language")
-        return jsonify({'message':f"Request must specify voice or language"}), 400
+    if not status == 200:
+        return r, status
+
+    voice = r['voice']
 
     #Preprocess text with language specific preprocessor
     if loaded_models[voice]['preprocessor']:

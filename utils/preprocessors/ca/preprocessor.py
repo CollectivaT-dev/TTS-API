@@ -23,6 +23,10 @@ def text_preprocess(text):
     text = text.strip()
     text = text.replace('&', 'i')
     text = re.sub('[Ö|ö]', 'o', text)
+    text = re.sub('[ş|Ş]', 's', text)
+    text = re.sub('[ü|Ü]', 'u', text)
+    text = re.sub('[ç|Ç]', 'c', text)
+    text = re.sub('[İ|ı]', 'i', text)
 
 
     return ' '.join([num_let(int(remove_nonnumber(t))) if has_numbers(t) else t for t in text.split()])
