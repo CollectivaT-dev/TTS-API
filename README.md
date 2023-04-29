@@ -196,5 +196,5 @@ Models available in [Ladino Data Hub](https://data.sefarad.com.tr/dataset/tts-tr
 
 ### Catalan
 
-- [Catotron Ona](https://g4e5.c13.e2-2.dev/dataset-share/catotron-ona-fast-speech-v0.2.zip) (trained with UPC's [festcat dataset](http://festcat.talp.cat/download.php)) 
+- [Catotron Ona](https://g4e5.c13.e2-2.dev/dataset-share/catotron-ona-fast-speech-v0.2.zip) - CC-BY 4.0, trained with UPC's [festcat dataset](http://festcat.talp.cat/download.php) 
 - Catotron Pau (coming soon)
