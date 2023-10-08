@@ -1,6 +1,7 @@
 import re
 import os
 import subprocess
+import logging
 
 COTOVIA_IN_TXT_PATH = 'text.txt'
 COTOVIA_OUT_TRA_PATH = 'text.tra'
@@ -9,6 +10,8 @@ TRA3 = True
 PUNCLIST = [';', '?', '¿', ',', ':', '.', '!', '¡']
 
 SIMULATE_COTOVIA = False
+
+logger = logging.getLogger(__name__)
 
 def canBeNumber(n):
     try:
@@ -57,10 +60,8 @@ def to_cotovia(text_segments, tra3=TRA3):
             if tra3:
                 segs = [remove_tra3_tags(line) for line in segs]
     except:
-        print("ERROR: Couldn't read cotovia output")
+        logger.error("ERROR: Couldn't read cotovia output")
 
-
-  
     return segs
 
 #Splits text from punctuation marks, gives list of segments in between and the punctuation marks. Skips punctuation not present in training.

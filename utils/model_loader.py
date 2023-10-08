@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from importlib import import_module
 
 # from TTS.utils.manage import ModelManager ##TODO: This could be enabled to load coqui models without pointing to path
@@ -8,11 +9,13 @@ from TTS.utils.synthesizer import Synthesizer
 DEFAULT_PREPROCESSOR_MODULE = 'preprocessor'
 DEFAULT_FRAMERATE = 22050
 
+logger = logging.getLogger(__name__)
+
 def read_config(config_file):
     """Read JSON format configuration file"""
     with open(config_file, "r") as jsonfile: 
         data = json.load(jsonfile) 
-        print("Config Read successful") 
+        logger.info("Config Read successful") 
     return data
 
 def load_lang_preprocessor(lang, preprocessor_module_name='preprocessor'):
@@ -21,7 +24,7 @@ def load_lang_preprocessor(lang, preprocessor_module_name='preprocessor'):
         preprocessor = lambda x: preprocessor_module.text_preprocess(x)
         return preprocessor
     except ModuleNotFoundError:
-        print("WARNING: Couldn't load preprocessor", preprocessor_module_name, 'for lang', lang)
+        logger.error(f"Couldn't load preprocessor {preprocessor_module_name} for lang {lang}")
         return None
 
 def load_coqui_model(model_data, model_config, models_root="models", use_cuda=False):
@@ -38,7 +41,7 @@ def load_coqui_model(model_data, model_config, models_root="models", use_cuda=Fa
         vocoder_checkpoint_path = os.path.join(models_root, model_config['vocoder_model_path'])
         vocoder_config_path = os.path.join(models_root, model_config['vocoder_config_path'])
     else:
-        print("WARNING: No Vocoder model or config specified. Loading with default vocoder.")
+        logger.warning("No Vocoder model or config specified. Loading with default vocoder.")
         vocoder_checkpoint_path = None
         vocoder_config_path = None
 
@@ -81,7 +84,7 @@ def load_models(config_data, models_root, use_cuda=False):
         model_data['voice'] = model_id
         
         if model_config['load']:
-            print('Loading', model_config['voice'])
+            logger.info(f'Loading {model_id}')
 
             #Get language code
             model_data['lang'] = model_config.get('lang')
@@ -90,16 +93,16 @@ def load_models(config_data, models_root, use_cuda=False):
             if model_data['lang'] in config_data['languages']:
                 model_data['language'] = config_data['languages'][model_data['lang']]
             else:
-                print("WARNING: Full language name not specified in configuration file")
+                logger.warning(f"Full language name for '{model_data['lang']}' not specified in configuration file")
             
             #Load TTS model (Only Coqui TTS support for now)
             if model_config['model_type'] == 'coqui':
                 success, message = load_coqui_model(model_data, model_config, models_root, use_cuda)
                 if not success:
-                    print("ERROR:", message)
+                    logger.error(message)
                     continue
             else:
-                print("ERROR: Model type %s is currently not supported. Skipping load."%(model_config['model_type']))
+                logger.error("Model type %s is currently not supported. Skipping load."%(model_config['model_type']))
                 continue
             
             #Load language specific preprocessor (if any)
@@ -113,6 +116,7 @@ def load_models(config_data, models_root, use_cuda=False):
             if model_config.get('defualt_for_lang') or model_data['lang'] not in default_model_ids:
                 default_model_ids[model_data['lang']] = model_data['voice']
 
+            logger.info(f"Voice {model_id} for {model_data['language']} loaded successfully")
 
             #TODO: This part is probably needed for multispeaker models. Not implementing as it's not needed for now
             # loaded_models[model_id]['use_multi_speaker'] = hasattr(synthesizer.tts_model, "num_speakers") and synthesizer.tts_model.num_speakers > 1

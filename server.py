@@ -1,31 +1,52 @@
 #!flask/bin/python
 import io
 import os
-
+import logging
 from flask import Flask, render_template, request, send_file, jsonify
 
 from TTS.config import load_config
-
 from utils.utils import style_wav_uri_to_dict, universal_text_normalize
 from utils.model_loader import read_config, load_models
 
+#Read environment variables
 MODELS_ROOT = 'models'
 CONFIG_JSON_PATH = os.getenv('TTS_API_CONFIG') if os.getenv('TTS_API_CONFIG') else 'config.json'
 USE_CUDA = True if os.getenv('USE_CUDA')=="1" else False
 COQUI_CONFIG_JSON_PATH = "coqui-models.json"
 
-#load config and models
+app = Flask(__name__)
+
+# Configure logging
+logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s | %(levelname)s | %(name)s:%(funcName)s:%(lineno)d - %(message)s')
+
+# Create a console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)  # Set the desired log level for console output
+
+# Create a formatter for console output
+console_formatter = logging.Formatter('%(levelname)s | %(message)s')
+
+# Set the formatter for the console handler
+console_handler.setFormatter(console_formatter)
+
+# Add the console handler to the root logger
+root_logger = logging.getLogger()
+root_logger.addHandler(console_handler)
+
+#Load config and models
 config_data = read_config(CONFIG_JSON_PATH)
 loaded_models, default_model_ids = load_models(config_data, MODELS_ROOT, USE_CUDA)
 
-print("USE_CUDA", USE_CUDA)
-print("MODELS DICT\n", loaded_models)
-print("DEFAULT MODELS\n", default_model_ids)
+# Configure the root logger
+logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s | %(levelname)s | %(name)s:%(funcName)s:%(lineno)d - %(message)s')
 
-app = Flask(__name__)
+logging.info(f"USE_CUDA: {USE_CUDA}")
+logging.info("MODELS: " + ', '.join([f'{m} ({loaded_models[m]["lang"]})' if default_model_ids[loaded_models[m]["lang"]] == m else f'{m}' for m in loaded_models]))
 
 @app.route("/")
 def index():
+    logging.info('Index page view')
+
     return render_template(
         "index.html",
         show_details=True,
@@ -60,6 +81,8 @@ def details():
 
 @app.route("/api/tts/voices", methods=["GET"])
 def list_voices():
+    logging.info("List voices request")
+
     voices_by_lang = {}
     for model_id in loaded_models:
         lang = loaded_models[model_id]['lang']
@@ -71,32 +94,34 @@ def list_voices():
     return voices_by_lang, 200
 
 @app.route("/api/tts/check", methods=["GET"])
-def check(voice=None, lang=None):
+def check(voice=None, lang=None):    
     if not voice and not lang:
         voice = request.args.get("voice")
         lang = request.args.get("lang")
 
+    logging.info(f"Check request voice: {voice}, lang: {lang}")
+
     if voice:
         #Check if voice is loaded
         if not voice in loaded_models:
-            print(f"REQUEST ERROR: Voice {voice} not found")
+            logging.warning(f"Voice {voice} not found")
             return jsonify({'message':f"Voice {voice} not found"}), 400
 
         if lang:
             #Check if voice is in lang if both are specified
             if not loaded_models[voice]['lang'] == lang:
-                print(f"REQUEST ERROR: Voice {voice} is not in specified lang {lang}")
+                logging.warning(f"Bad request - Voice {voice} is not in specified lang {lang}")
                 return jsonify({'message':f"Voice {voice} is not in speficied lang {lang}"}), 400
     elif lang:
         #Get default voice for language
         if lang in default_model_ids:
             voice = default_model_ids[lang]
-            print(f" > Default voice: {voice}")
+            logging.info(f"Voice found: {voice}")
         else:
-            print(f"REQUEST ERROR: No model for language {lang}")
+            logging.warning(f"No model for language {lang}")
             return jsonify({'message':f"No model for language {lang}"}), 400
     else:
-        print(f"REQUEST ERROR: Request must specify voice or language")
+        logging.warning("Request must specify voice or language")
         return jsonify({'message':f"Request must specify voice or language"}), 400
 
     return {"voice": voice, "framerate": loaded_models[voice]['framerate']}, 200
@@ -107,14 +132,12 @@ def tts():
     voice = request.args.get("voice")
     lang = request.args.get("lang")
     # speaker_idx = request.args.get("speaker_id", "")
-    print(f"TTS API REQUEST")
-    print(f" > Input text: {text}")
-    print(f" > Voice: {voice}")
-    print(f" > Lang: {lang}")
+    logging.info(f"TTS REQUEST in voice: {voice} lang {lang}")
+    logging.info(f"Text: {text}")
     # print(" > Speaker Idx: {}".format(speaker_idx))
 
     if not text:
-        print(f"REQUEST ERROR: Text must not be empty")
+        logging.warning("Text empty")
         return jsonify({'message':f"Text must not be empty"}), 400
 
     r, status = check(voice, lang)
@@ -131,16 +154,17 @@ def tts():
     #Normalize text with universal normalizer
     text = universal_text_normalize(text)
 
-    print(" > Preprocessed text:", text)
+    logging.info(f"Preprocessed text: {text}")
 
     if not text:
-        print(f"REQUEST ERROR: Invalid text")
+        logging.warning(f"Invalid text for synthesis")
         return jsonify({'message':f"Invalid text"}), 400
 
     #wavs = loaded_models[voice]['synthesizer'].tts(preprocessed_text, speaker_name=speaker_idx, style_wav=style_wav)
     wavs = loaded_models[voice]['synthesizer'].tts(text)
     out = io.BytesIO()
     loaded_models[voice]['synthesizer'].save_wav(wavs, out)
+    logging.info("Sending out wav")
     return send_file(out, mimetype="audio/wav")
 
 
