@@ -123,7 +123,6 @@ def pronounce_acronym(text):
     return ACRONYMS.get(text, text)
 
 def convert_numbered(exp):
-    print("convertnumbered")
     exp = separate_numbers_from_text(exp)
     tokens = exp.split()
     
