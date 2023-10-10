@@ -99,7 +99,7 @@ def load_models(config_data, models_root, use_cuda=False):
             if model_config['model_type'] == 'coqui':
                 success, message = load_coqui_model(model_data, model_config, models_root, use_cuda)
                 if not success:
-                    logger.error(message)
+                    logger.error(f"Cannot load model. {message}")
                     continue
             else:
                 logger.error("Model type %s is currently not supported. Skipping load."%(model_config['model_type']))

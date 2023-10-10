@@ -99,7 +99,7 @@ def check(voice=None, lang=None):
         voice = request.args.get("voice")
         lang = request.args.get("lang")
 
-    logging.info(f"Check request voice: {voice}, lang: {lang}")
+    # logging.info(f"Check request voice: {voice}, lang: {lang}")
 
     if voice:
         #Check if voice is loaded
@@ -132,7 +132,7 @@ def tts():
     voice = request.args.get("voice")
     lang = request.args.get("lang")
     # speaker_idx = request.args.get("speaker_id", "")
-    logging.info(f"TTS REQUEST in voice: {voice} lang {lang}")
+    logging.info(f"TTS REQUEST in voice: {voice} lang: {lang}")
     logging.info(f"Text: {text}")
     # print(" > Speaker Idx: {}".format(speaker_idx))
 
