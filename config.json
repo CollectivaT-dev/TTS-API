@@ -106,6 +106,7 @@
             "voice": "ona-fast-hifigan",
             "lang": "ca",
             "model_type": "coqui",
+            "defualt_for_lang": true,
             "tts_config_path": "ca/fast-speech_config.json",
             "tts_model_path": "ca/fast-speech_best_model.pth",
             "vocoder_config_path": "ca/ljspeech--hifigan_v2_config.json",

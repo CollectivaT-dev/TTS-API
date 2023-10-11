@@ -1,6 +1,7 @@
 import re
 import os
 import subprocess
+import logging
 
 COTOVIA_IN_TXT_PATH = 'text.txt'
 COTOVIA_OUT_TRA_PATH = 'text.tra'
@@ -8,6 +9,8 @@ COTOVIA_OUT_TRA_PATH = 'text.tra'
 PUNCLIST = [';', '?', '¿', ',', ':', '.', '!', '¡']
 
 SIMULATE_COTOVIA = False
+
+logger = logging.getLogger(__name__)
 
 def canBeNumber(n):
     try:
@@ -77,8 +80,8 @@ def text_preprocess(text):
 
     #Split from punc
     text_segments, puncs = split_punc(text)
-    print('text_segments', text_segments)
-    print('puncs', puncs)
+    logger.info(f'text_segments {text_segments}')
+    logger.info(f'puncs {puncs}')
 
     cotovia_phon_segs = to_cotovia(text_segments)
 

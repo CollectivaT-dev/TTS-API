@@ -1,3 +1,5 @@
+deb/*
+killport.sh
 models
 models/*
 .DS_Store
