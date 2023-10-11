@@ -19,7 +19,7 @@ UNITS = {line.split(',')[0]: line.split(',')[1].strip() for line in open(os.path
 
 PUNCLIST = [';', '?', '¿', ',', ':', '.', '!', '¡']
 URL_PATTERN = re.compile(r'^(https?://|www\.)\S+', re.IGNORECASE)
-ALLOWED_IN_NUMERICAL = [',', '.']
+ALLOWED_IN_NUMERICAL = [',', '.', '/']
 
 #Splits text from punctuation marks, gives list of segments in between and the punctuation marks. Skips punctuation not present in training.
 def split_punc(text):
@@ -142,14 +142,23 @@ def convert_numbered(exp, next_token=""):
         if has_numbers(tok):
             h,m = extract_time(tok)
             if h and m:
-                converted += read_hours(h, m)
+                try:
+                    converted += read_hours(h, m)
+                except Exception as e:
+                    logger.error(f"time conversion fail '{tok}' {e}")
             elif tok.count('/') == 2 or tok.count('-') == 2:
                 #condition that follows DD/MM/YYYY
-                converted += read_dates(tok)
-            else:    
-                tok = tok.replace(".", "")
-                tok = tok.replace(",", ".")
-                converted += num_let(float(tok))
+                try:
+                    converted += read_dates(tok)
+                except Exception as e:
+                    logger.error(f"date conversion fail '{tok}' {e}")
+            else:   
+                try: 
+                    tok = tok.replace(".", "")
+                    tok = tok.replace(",", ".")
+                    converted += num_let(float(remove_nonnumber(tok)))
+                except Exception as e:
+                    logger.error(f"number conversion fail '{tok}' {e}")
         else:
             converted_tok = pronounce_unit(tok)
             converted_tok = pronounce_symbol(converted_tok)
@@ -176,7 +185,7 @@ def has_numbers(inputString):
     return any(char.isdigit() for char in inputString)
 
 def remove_nonnumber(text):
-    return re.sub('[^0-9]','', text)
+    return re.sub('[^0-9]\.','', text)
 
 def fix_special_symbols(text):
     text = re.sub('[Ö|ö]', 'o', text)
@@ -199,8 +208,6 @@ def text_preprocess(text):
 
         for tok in seg_tokens:
             try:
-                
-                
                 if has_numbers(tok):
                     tok = convert_numbered(tok)
                     number_behind = True
@@ -213,7 +220,7 @@ def text_preprocess(text):
                 tok = pronounce_letter(tok)
                 tok = pronounce_symbol(tok)
             except Exception as e:
-                logger.error(f"Normalization fail + {e}")
+                logger.error(f"Normalization fail. {e}")
                 
             new_seg_tokens.append(tok)
 
