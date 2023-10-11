@@ -61,16 +61,26 @@ def merge_punc(text_segs, puncs):
             merged_str += puncs[i] + " "
     return merged_str.strip()
 
-#TODO: Doesn't work
-def read_hours(text):
-    if not text.endswith(":"):
-        hour_part, minute_part = text.split(':')
-        hour_processed = num_let(int(remove_nonnumber(hour_part)))
-        minute_processed = num_let(int(remove_nonnumber(minute_part)))
-        text = hour_processed + " i " + minute_processed
-        return text
+def extract_time(text):
+    # Regular expression pattern for HH.MM format
+    pattern = r'\b(0[0-9]|1[0-9]|2[0-3])\.([0-5][0-9])\b'
+    
+    # Find the first match
+    match = re.search(pattern, text)
+    
+    if match:
+        # Extract hour and minute as integers
+        hour = int(match.group(1))
+        minute = int(match.group(2))
+        return hour, minute
     else:
-        text.rstrip(":")
+        return None, None
+
+def read_hours(hour_part, minute_part):
+    # hour_processed = num_let(int(remove_nonnumber(hour_part)))
+    # minute_processed = num_let(int(remove_nonnumber(minute_part)))
+    text = num_let(hour_part) + " i " + num_let(minute_part)
+    return text
 
 def read_dates(text):
     if "/" in text:
@@ -122,7 +132,7 @@ def pronounce_unit(unit):
 def pronounce_acronym(text):
     return ACRONYMS.get(text, text)
 
-def convert_numbered(exp):
+def convert_numbered(exp, next_token=""):
     exp = separate_numbers_from_text(exp)
     tokens = exp.split()
     
@@ -130,9 +140,9 @@ def convert_numbered(exp):
     
     for tok in tokens:
         if has_numbers(tok):
-            if ':' in tok:
-                #TODO: Doesn't work
-                converted += read_hours(tok)
+            h,m = extract_time(tok)
+            if h and m:
+                converted += read_hours(h, m)
             elif tok.count('/') == 2 or tok.count('-') == 2:
                 #condition that follows DD/MM/YYYY
                 converted += read_dates(tok)
@@ -189,10 +199,7 @@ def text_preprocess(text):
 
         for tok in seg_tokens:
             try:
-                tok = pronounce_acronym(tok)
-                tok = convert_url(tok)
-                tok = pronounce_letter(tok)
-                tok = pronounce_symbol(tok)
+                
                 
                 if has_numbers(tok):
                     tok = convert_numbered(tok)
@@ -200,6 +207,11 @@ def text_preprocess(text):
                 elif number_behind:
                     tok = pronounce_unit(tok)
                     number_behind = False
+
+                tok = pronounce_acronym(tok)
+                tok = convert_url(tok)
+                tok = pronounce_letter(tok)
+                tok = pronounce_symbol(tok)
             except Exception as e:
                 logger.error(f"Normalization fail + {e}")
                 
