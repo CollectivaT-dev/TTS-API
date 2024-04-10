@@ -2,12 +2,12 @@
     "languages":{"en":"English", "es":"Spanish", "tr":"Turkish", "lad":"Ladino", "ca":"Catalan", "gl":"Galician"},
     "models": [
         {
-            "voice": "sabela-glow-morph",
+            "voice": "galotron-sabela",
             "lang": "gl",
             "model_type": "coqui",
             "tts_config_path": "gl/vits_config.json",
             "tts_model_path": "gl/vits_best_model_52125.pth",
-            "load": false
+            "load": true
         },
         {
             "voice": "sabela-morph",
@@ -74,9 +74,7 @@
             "model_type": "coqui",
             "tts_config_path": "lad/eng_lad_v2_config.json",
             "tts_model_path": "lad/eng_lad_v2_checkpoint_770000.pth",
-            "vocoder_config_path": "/Users/alp/Library/Application Support/TTS/vocoder_models--en--ljspeech--hifigan_v2/config.json",
-            "vocoder_model_path": "/Users/alp/Library/Application Support/TTS/vocoder_models--en--ljspeech--hifigan_v2/model_file.pth",
-            "load": false
+            "load": true
         },
         {
             "voice": "pau",
@@ -103,10 +101,9 @@
             "load": false
         },
         {
-            "voice": "ona-fast-hifigan",
+            "voice": "catotron-ona",
             "lang": "ca",
             "model_type": "coqui",
-            "defualt_for_lang": true,
             "tts_config_path": "ca/fast-speech_config.json",
             "tts_model_path": "ca/fast-speech_best_model.pth",
             "vocoder_config_path": "ca/ljspeech--hifigan_v2_config.json",

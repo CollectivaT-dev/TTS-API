@@ -25,9 +25,9 @@ services:
     #           capabilities: [gpu]
     #Remove comment above to enable GPU inference
 
-    # networks:
-    #   - api-network
+    networks:
+      - api-network
       
-# networks:
-#   api-network:
-#     external: true
+networks:
+  api-network:
+    external: true
