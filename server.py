@@ -2,20 +2,22 @@
 import io
 import os
 import logging
-from flask import Flask, render_template, request, send_file, jsonify
+from logging.handlers import RotatingFileHandler
+from flask import Flask, render_template, request, send_file, jsonify, make_response
 from typing import List
 from TTS.config import load_config
-from utils.utils import style_wav_uri_to_dict, universal_text_normalize
+from utils.utils import style_wav_uri_to_dict, universal_text_normalize, parse_sents
 from utils.model_loader import read_config, load_models
 from pydub import AudioSegment
-from nltk.tokenize import sent_tokenize
 import tempfile
+import json
 
 app = Flask(__name__)
 
 #Read environment variables
 MODELS_ROOT = 'models'
 CONFIG_JSON_PATH = os.getenv('TTS_API_CONFIG', 'config.json')
+LOG_DIR = os.getenv('TTS_LOG_DIR', 'logs') 
 LOG_PATH = os.getenv('TTS_LOG_PATH', 'app.log') 
 USE_CUDA = True if os.getenv('USE_CUDA')=="1" else False
 COQUI_CONFIG_JSON_PATH = "coqui-models.json"
@@ -23,34 +25,37 @@ COQUI_CONFIG_JSON_PATH = "coqui-models.json"
 #Constants
 LONG_SILENCE_SEGMENT = AudioSegment.silent(duration=500)
 SHORT_SILENCE_SEGMENT = AudioSegment.silent(duration=200)
-TMP_AUDIO_PATH = '../audio-cache'
-CLOUD_AUDIO_FORMAT = 'mp3'
 
 # Configure logging
-logging.basicConfig(filename=LOG_PATH, level=logging.INFO, format='%(asctime)s | %(levelname)s | %(name)s:%(funcName)s:%(lineno)d - %(message)s')
-
-# Create a console handler
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)  # Set the desired log level for console output
-
-# Create a formatter for console output
-console_formatter = logging.Formatter('%(levelname)s | %(message)s')
-
-# Set the formatter for the console handler
-console_handler.setFormatter(console_formatter)
-
-# Add the console handler to the root logger
-root_logger = logging.getLogger()
-root_logger.addHandler(console_handler)
+os.makedirs(LOG_DIR, exist_ok=True)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)  # Set the logging level
+formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+file_handler = RotatingFileHandler(os.path.join(LOG_DIR, LOG_PATH), maxBytes=1024*1024*5)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 
 #Load config and models
 config_data = read_config(CONFIG_JSON_PATH)
 loaded_models, default_model_ids = load_models(config_data, MODELS_ROOT, USE_CUDA)
 
-
 logging.info(f"USE_CUDA: {USE_CUDA}")
 logging.info("MODELS: " + ', '.join([f'{m} ({loaded_models[m]["lang"]})' if default_model_ids[loaded_models[m]["lang"]] == m else f'{m}' for m in loaded_models]))
 
+#Standard responses
+def error_response(message, status_code):
+    """Return a JSON error message and HTTP status code."""
+    return make_response(jsonify({'message': message}), status_code)
+
+def success_response(data, status_code=200):
+    """Return a JSON data and HTTP status code."""
+    return make_response(jsonify(data), status_code)
+
+# synthesize
+# Preprocesses text using language specific preprocessor and then universal normalizer and sends to TTS
 def synthesize(text:str, voice:str):
     out = 0
     success = 0
@@ -63,7 +68,7 @@ def synthesize(text:str, voice:str):
     #Normalize text with universal normalizer
     text = universal_text_normalize(text)
 
-    logging.info(f"Preprocessed text: {text}")
+    # logging.info(f"Preprocessed text: {text}")
 
     if not text:
         logging.warning(f"Invalid text for synthesis")
@@ -75,28 +80,15 @@ def synthesize(text:str, voice:str):
         wavs = loaded_models[voice]['synthesizer'].tts(text)
         out = io.BytesIO()
         loaded_models[voice]['synthesizer'].save_wav(wavs, out)
-        logging.info("Success")
         success = 1
     except Exception as e:
         detail = str(e)
 
     return out, success, detail
 
-#Text normalization functions
-
-#TODO: Clean text (stub)
-def clean_sent(text:str):
-    #TODO
-    return text
-
-#Parse sentences from text (uses NLTK sent_tokenize)
-def parse_sents(text:str):
-    sents = []
-    sent_candidates = sent_tokenize(text.strip())
-    clean_sents = [clean_sent(s) for s in sent_candidates]
-    return clean_sents 
-
-#Synthesizes and merges a list of strings using method synthesize
+# long_synthesize
+# Synthesizes each paragraph with a long pause in between. 
+# Each sentence in paragraph is synthesized with method synthesize and merged with a short pause in between
 def long_synthesize(text_paragraphs:List[str], voice:str):
     framerate = loaded_models[voice]['framerate']
     allsound = AudioSegment.empty()
@@ -127,7 +119,6 @@ def long_synthesize(text_paragraphs:List[str], voice:str):
     return allsound
 
 # APP ENDPOINTS
-
 @app.route("/")
 def index():
     logging.info('Index page view')
@@ -164,123 +155,127 @@ def details():
         args=model,
     )
 
-@app.route("/api/tts/voices", methods=["GET"])
+@app.route("/api/voices", methods=["GET"])
 def list_voices():
     logging.info("List voices request")
 
-    voices_by_lang = {}
-    for model_id in loaded_models:
-        lang = loaded_models[model_id]['lang']
-        if lang not in voices_by_lang:
-            voices_by_lang[lang] = {'name':loaded_models[model_id]['language'], 'voices':{}}
-        voices_by_lang[lang]['voices'][model_id] = {'default': True if default_model_ids[lang] == model_id else False,
-                                                    'framerate': loaded_models[model_id]['framerate']}
+    try:
+        voices_by_lang = {}
+        for model_id in loaded_models:
+            lang = loaded_models[model_id]['lang']
+            if lang not in voices_by_lang:
+                voices_by_lang[lang] = {'name':loaded_models[model_id]['language'], 'voices':{}}
+            voices_by_lang[lang]['voices'][model_id] = {'default': True if default_model_ids[lang] == model_id else False,
+                                                        'framerate': loaded_models[model_id]['framerate']}
 
-    return voices_by_lang, 200
+        return success_response(voices_by_lang)
+    except Exception as e:
+        return error_response(str(e), 500)
 
-@app.route("/api/tts/check", methods=["GET"])
-def check(voice:str=None, lang:str=None):    
+# Endpoint to check if given voice and/or language is available within loaded models
+@app.route("/api/check", methods=["GET"])
+def check(voice=None, lang=None):
     if not voice and not lang:
         voice = request.args.get("voice")
         lang = request.args.get("lang")
 
-    # logging.info(f"Check request voice: {voice}, lang: {lang}")
+    if not voice and not lang:
+        # return {"error": "Request must specify voice or language"}, 400
+        return error_response("Request must specify voice or language", 400)
 
-    if voice:
-        #Check if voice is loaded
-        if not voice in loaded_models:
-            logging.warning(f"Voice {voice} not found")
-            return jsonify({'message':f"Voice {voice} not found"}), 400
+    if voice and voice not in loaded_models:
+        # return {"error": f"Voice {voice} not found"}, 404
+        return error_response(f"Voice {voice} not found", 404)
 
-        if lang:
-            #Check if voice is in lang if both are specified
-            if not loaded_models[voice]['lang'] == lang:
-                logging.warning(f"Bad request - Voice {voice} is not in specified lang {lang}")
-                return jsonify({'message':f"Voice {voice} is not in speficied lang {lang}"}), 400
-    elif lang:
-        #Get default voice for language
-        if lang in default_model_ids:
-            voice = default_model_ids[lang]
-            logging.info(f"Voice found: {voice}")
-        else:
-            logging.warning(f"No model for language {lang}")
-            return jsonify({'message':f"No model for language {lang}"}), 400
+    if lang:
+        if voice and loaded_models[voice]['lang'] != lang:
+            # return {"error": f"Voice {voice} is not in specified lang {lang}"}, 400
+            return error_response(f"Voice {voice} is not in specified lang {lang}", 400)
+        if lang not in default_model_ids:
+            # return {"error": f"No model for language {lang}"}, 404
+            return error_response(f"No model for language {lang}", 404)
+        
+        voice = default_model_ids[lang]  # Set default voice for the language
     else:
-        logging.warning("Request must specify voice or language")
-        return jsonify({'message':f"Request must specify voice or language"}), 400
+        lang = loaded_models[voice]['lang']
 
-    return {"voice": voice, "framerate": loaded_models[voice]['framerate']}, 200
+    # return {"voice": voice, "framerate": loaded_models[voice]['framerate']}, 200
+    return success_response({"voice":voice, "lang": lang})
 
 
-@app.route("/api/short", methods=["GET"])
+# Simple TTS endpoint. Gets plain text as input and returns WAV. (Not used by Gateway)
+@app.route("/api/short", methods=["POST"])
 def tts():
-    text = request.args.get("text")
-    voice = request.args.get("voice")
-    lang = request.args.get("lang")
-    # speaker_idx = request.args.get("speaker_id", "")
-    logging.info(f"Short TTS request in voice: {voice} lang: {lang}")
-    logging.info(f"Requested text: {text}")
-    # print(" > Speaker Idx: {}".format(speaker_idx))
+    data = request.get_json()
+    if not data:
+        return error_response("No data provided", 400)
+    
+    text = data.get('text')
+    voice = data.get('voice')
+    lang = data.get('lang')
 
     if not text:
-        logging.warning("Text empty")
-        return jsonify({'message':f"Text must not be empty"}), 400
+        return error_response("Text must not be empty", 400)
 
-    r, status = check(voice, lang)
-
-    if not status == 200:
-        return r, status
-
-    voice = r['voice']
+    result = check(voice, lang)
+    result_info = json.loads(result.data.decode('utf-8'))
+    if result.status_code != 200:
+        return error_response(result_info['message'], result.status_code)
+    
+    voice = result_info['voice']
 
     out, success, detail = synthesize(text, voice)
     if success:
-        return send_file(out, mimetype="audio/wav")
-    else: 
-        return jsonify({'message':detail}), 400
+        response = make_response(send_file(out, mimetype="audio/wav"))
+        response.headers['Content-Type'] = 'audio/wav'
+        return response
+    else:
+        return error_response(detail, 500)
 
-
-@app.route("/api/long", methods=["GET"])
+# # Endpoint that uses long_synthesize. Returns mp3 or uploads to given cloud URL
+@app.route("/api/long", methods=["POST"])
 def longtts():
-    text = request.args.get("text")
-    voice = request.args.get("voice")
-    lang = request.args.get("lang")
-    # speaker_idx = request.args.get("speaker_id", "")
-    logging.info(f"Long TTS request in voice: {voice} lang: {lang}")
-    logging.info(f"Requested text: {text}")
-    # print(" > Speaker Idx: {}".format(speaker_idx))
+    data = request.get_json()  # Get the JSON data
+    if not data:
+        return error_response('No data provided', 400)
+    
+    text_paragraphs = data.get('text_paragraphs')
+    voice = data.get('voice')
+    lang = data.get('lang')
 
-    if not text:
+    if not text_paragraphs or not "".join(text_paragraphs).strip():
         logging.warning("Text empty")
-        return jsonify({'message':f"Text must not be empty"}), 400
+        return error_response("Text must not be empty", 400)
 
-    r, status = check(voice, lang)
-
-    if not status == 200:
-        return r, status
-
-    voice = r['voice']
-
-    audioseg = long_synthesize([text], voice)
+    result = check(voice, lang)
+    result_info = json.loads(result.data.decode('utf-8'))
     
-    # Use a temporary file to hold the audio data
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmpfile:
-        audioseg.export(tmpfile.name, format="mp3")
-        tmpfile_path = tmpfile.name
-    
-    # Serve the temporary file with send_file, setting as_attachment to True to prompt download
-    response = send_file(tmpfile_path, mimetype="audio/mp3")
-    
-    # Optionally, remove the temporary file if you don't need it after sending
-    os.unlink(tmpfile_path)
+    if result.status_code != 200:
+        return error_response(result_info['message'], result.status_code)
 
-    return response
+    voice = result_info['voice']
 
+    logging.info(f"Long TTS request in voice: {voice} lang: {lang}")
+    logging.info(f"#Segments: {len(text_paragraphs)} #characters: {len(''.join(text_paragraphs))}")
+
+    try:
+        audioseg = long_synthesize(text_paragraphs, voice)
+        
+        # Use a temporary file to hold the audio data
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmpfile:
+            audioseg.export(tmpfile.name, format="mp3")
+            tmpfile_path = tmpfile.name
+        
+        response = send_file(tmpfile_path, mimetype="audio/mp3", as_attachment=True)
+        os.unlink(tmpfile_path)  # Clean up the temporary file after sending
+        return response
+    except Exception as e:
+        logging.error(f"Error during synthesis: {str(e)}")
+        return error_response("Failed to synthesize audio", 500)
 
 
 def main():
-    app.run(debug=True, host="::", port=5002)
-
+    app.run(debug=True, host="::", port=5050)
 
 if __name__ == "__main__":
     main()
