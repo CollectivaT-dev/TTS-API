@@ -123,11 +123,77 @@ In `run_local.sh` set the `USE_CUDA` flag to 1
 
 ## API usage
 
-There's currently one API endpoint for synthesis at `/api/tts`. Text and voice parameters are specified as values. 
+This section provides basic instructions on how to interact with the API after deployment.
 
+### Endpoints
+
+The API offers the following endpoints:
+
+- **Voices List**:
+  - **GET** `/api/voices`
+  - Description: Retrieves a list of available voices and languages supported by the TTS service.
+
+- **Synthesize Speech (Short)**:
+  - **POST** `/api/short`
+  - Description: Sends text to synthesize into speech and returns an audio file in WAV format. This endpoint is ideal for testing purposes with short text inputs. It can accept either a specific voice or a language code to use the default voice for that language.
+  - Payload example:
+    ```json
+    {
+      "text": "Hola, món!",
+      "voice": "catotron-ona"
+    }
+    ```
+    or
+    ```json
+    {
+      "text": "Hola, món!",
+      "lang": "ca"
+    }
+    ```
+
+- **Long Synthesis**:
+  - **POST** `/api/long`
+  - Description: Processes longer texts or multiple sentences and returns a single concatenated audio file in MP3 format. Recommended for multi-sentence requests. Like the short endpoint, it can also accept either a voice or a language code.
+  - Payload example:
+    ```json
+    {
+      "text_paragraphs": ["Hola, món!", "Benvinguts al nostre servei."],
+      "voice": "catotron-ona"
+    }
+    ```
+    or
+    ```json
+    {
+      "text_paragraphs": ["Hola, món!", "Benvinguts al nostre servei."],
+      "lang": "ca"
+    }
+    ```
+
+### How to Send Requests
+
+You can use any HTTP client to send requests to these endpoints. Here's an example using `curl` for the short synthesis endpoint:
+
+```bash
+curl -X POST http://localhost:5050/api/short \
+     -H 'Content-Type: application/json' \
+     -d '{"text":"Hola, món!", "voice":"catotron-ona"}'
 ```
-curl -L -X GET 'http://localhost:5050/api/tts?text=kaza+maraviyosa&voice=karen' --output maraviyoza.wav
+
+### Response Handling
+
+Responses from the API will either be JSON-formatted data containing the results or metadata, or audio files depending on the endpoint accessed. Ensure your client properly handles the expected type of response.
+
+### Error Handling
+
+Errors are returned as JSON objects with a `message` field describing the error, accompanied by an appropriate HTTP status code. For example:
+
+```json
+{
+  "message": "El text no pot estar buit"
+}
 ```
+
+Make sure to check the status code and handle errors accordingly in your client application.
 
 ## Demo page
 
