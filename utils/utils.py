@@ -2,6 +2,7 @@ import os
 import json
 from typing import Union
 import string
+from nltk.tokenize import sent_tokenize
 
 ENDING_PUNCTUATION = ["?", ".", "!"] #TODO: Latin only
 
@@ -31,3 +32,9 @@ def universal_text_normalize(text: str):
         text = text + "."
 
     return text
+
+#Parse sentences from text using NLTK sent_tokenize. (Warning: English-based)
+def parse_sents(text:str):
+    sents = []
+    sent_candidates = sent_tokenize(text.strip())
+    return sent_candidates 
