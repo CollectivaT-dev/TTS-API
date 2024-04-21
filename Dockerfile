@@ -7,6 +7,7 @@ ENV VIRTUAL_ENV=/opt/venv
 RUN apt-get update \
     && apt-get install gcc g++ mecab libmecab-dev mecab-ipadic-utf8 libsndfile1 -y \
     && apt-get install libasound2 libc6 libgcc1 libstdc++6 -y \
+    && apt-get install --no-install-recommends -y ffmpeg \
     && apt-get clean
 
 RUN python -m venv "$VIRTUAL_ENV"
@@ -22,3 +23,6 @@ RUN pip install -r /app/requirements.txt \
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
+
+COPY ./nltk_pkg.py /app/nltk_pkg.py
+RUN python /app/nltk_pkg.py

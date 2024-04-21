@@ -93,6 +93,8 @@ def long_synthesize(text_paragraphs:List[str], voice:str):
     framerate = loaded_models[voice]['framerate']
     allsound = AudioSegment.empty()
 
+    allsound += LONG_SILENCE_SEGMENT #initial silence
+
     for paragraph in text_paragraphs:
         segments = parse_sents(paragraph)
         for s in segments:
