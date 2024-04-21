@@ -125,21 +125,52 @@
                 do_tts(e)
             }
         })
+        // function synthesize(text, speaker_id = "", style_wav = "") {
+        //     fetch(`/api/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(speaker_id)}&style_wav=${encodeURIComponent(style_wav)}`, { cache: 'no-cache' })
+        //         .then(function (res) {
+        //             if (!res.ok) throw Error(res.statusText)
+        //             return res.blob()
+        //         }).then(function (blob) {
+        //             q('#message').textContent = ''
+        //             q('#speak-button').disabled = false
+        //             q('#audio').src = URL.createObjectURL(blob)
+        //             q('#audio').hidden = false
+        //         }).catch(function (err) {
+        //             q('#message').textContent = 'Error: ' + err.message
+        //             q('#speak-button').disabled = false
+        //         })
+        // }
         function synthesize(text, speaker_id = "", style_wav = "") {
-            fetch(`/api/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(speaker_id)}&style_wav=${encodeURIComponent(style_wav)}`, { cache: 'no-cache' })
-                .then(function (res) {
-                    if (!res.ok) throw Error(res.statusText)
-                    return res.blob()
-                }).then(function (blob) {
-                    q('#message').textContent = ''
-                    q('#speak-button').disabled = false
-                    q('#audio').src = URL.createObjectURL(blob)
-                    q('#audio').hidden = false
-                }).catch(function (err) {
-                    q('#message').textContent = 'Error: ' + err.message
-                    q('#speak-button').disabled = false
-                })
+            // Prepare the data as a JSON object
+            const data = {
+                text: text,
+                voice: speaker_id,
+                style_wav: style_wav
+            };
+
+            // Make the fetch request with the appropriate headers and method
+            fetch('/api/short', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data), // Convert the JavaScript object to a JSON string
+                cache: 'no-cache'
+            })
+            .then(function (res) {
+                if (!res.ok) throw Error(res.statusText);
+                return res.blob();
+            }).then(function (blob) {
+                q('#message').textContent = '';
+                q('#speak-button').disabled = false;
+                q('#audio').src = URL.createObjectURL(blob);
+                q('#audio').hidden = false;
+            }).catch(function (err) {
+                q('#message').textContent = 'Error: ' + err.message;
+                q('#speak-button').disabled = false;
+            });
         }
+
         function get_details(e) {
             const speaker_id = getTextValue('#speaker_id')
             location.href = 'details?voice=' + speaker_id
