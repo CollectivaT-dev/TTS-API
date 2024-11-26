@@ -78,6 +78,12 @@ docker compose build
 docker compose up
 ```
 
+To run on background 
+
+```
+docker compose up -d 
+```
+
 ### Run with local installation
 
 You might want to create a virtual environment before doing this option.
@@ -177,6 +183,7 @@ You can use any HTTP client to send requests to these endpoints. Here's an examp
 curl -X POST http://localhost:5050/api/short \
      -H 'Content-Type: application/json' \
      -d '{"text":"Hola, món!", "voice":"catotron-ona"}'
+     --output hola.wav
 ```
 
 ### Response Handling
@@ -235,6 +242,8 @@ You can see example preprocessors in the repository.
 ## Languages
 
 ### Galician
+
+Models available in [Proxecto Nós's HuggingFace repository](https://huggingface.co/collections/proxectonos/tts-models-65cf35498df786a4d59bafa4)
 
 If you're using a phonetic model that depends on Cotovia library, you need to make sure:
 
