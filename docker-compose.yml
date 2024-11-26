@@ -24,10 +24,3 @@ services:
     #           count: 1 #set to "all" to use all GPUs
     #           capabilities: [gpu]
     #Remove comment above to enable GPU inference
-
-    networks:
-      - api-network
-      
-networks:
-  api-network:
-    external: true
