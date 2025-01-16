@@ -54,67 +54,40 @@ def success_response(data, status_code=200):
     """Return a JSON data and HTTP status code."""
     return make_response(jsonify(data), status_code)
 
-# synthesize
-# Preprocesses text using language specific preprocessor and then universal normalizer and sends to TTS
-def synthesize(text:str, voice:str):
-    out = 0
-    success = 0
-    detail = "success"
-
-    #Preprocess text with language specific preprocessor
-    if loaded_models[voice]['preprocessor']:
-        text = loaded_models[voice]['preprocessor'](text)
-        
-    #Normalize text with universal normalizer
-    text = universal_text_normalize(text)
-
-    # logging.info(f"Preprocessed text: {text}")
-
-    if not text:
-        logging.warning(f"Invalid text for synthesis")
-        detail = "Invalid text for synthesis"
-        return out, success, detail
-
-    try:
-        #wavs = loaded_models[voice]['synthesizer'].tts(preprocessed_text, speaker_name=speaker_idx, style_wav=style_wav)
-        wavs = loaded_models[voice]['synthesizer'].tts(text)
-        out = io.BytesIO()
-        loaded_models[voice]['synthesizer'].save_wav(wavs, out)
-        success = 1
-    except Exception as e:
-        detail = str(e)
-
-    return out, success, detail
-
 # long_synthesize
-# Synthesizes each paragraph with a long pause in between. 
+# Synthesizes each paragraph with a pause in between. 
 # Each sentence in paragraph is synthesized with method synthesize and merged with a short pause in between
-def long_synthesize(text_paragraphs:List[str], voice:str):
+def long_synthesize(text_paragraphs: List[str], voice: str):
     framerate = loaded_models[voice]['framerate']
+    model = loaded_models[voice]['model']
+    preprocessor = loaded_models[voice]['preprocessor']
+    
     allsound = AudioSegment.empty()
-
-    allsound += LONG_SILENCE_SEGMENT #initial silence
+    allsound += LONG_SILENCE_SEGMENT  # initial silence
 
     for paragraph in text_paragraphs:
         segments = parse_sents(paragraph)
         for s in segments:
-            audiobytes, success, detail = synthesize(text=s, voice=voice)
-        
-            if success:
+            try:
+                if preprocessor:
+                    s = preprocessor(s)
+                else:
+                    #Normalize text with universal normalizer
+                    s = universal_text_normalize(s)
+                
+                audiobytes = model.synthesize(s)
+                
+                # Skip WAV header (first 1024 bytes) to avoid clicking
                 sound = AudioSegment(
-                    # raw audio data (bytes)
-                    data=audiobytes.getvalue()[1024:],
-                    # 2 byte (16 bit) samples
+                    data=audiobytes.getvalue()[1024:],  # Skip WAV header
                     sample_width=2,
-                    # 16 kHz frame rate
-                    frame_rate=framerate, 
-                    # mono
+                    frame_rate=framerate,
                     channels=1
                 )
 
                 allsound += sound + SHORT_SILENCE_SEGMENT
-            else:
-                logging.warning(f"Couldn't synthesize segment |{s}|. Reason: {detail}")
+            except Exception as e:
+                logging.warning(f"Couldn't synthesize segment |{s}|. Reason: {str(e)}")
 
         allsound += LONG_SILENCE_SEGMENT
 
@@ -225,14 +198,33 @@ def tts():
         return error_response(result_info['message'], result.status_code)
     
     voice = result_info['voice']
-
-    out, success, detail = synthesize(text, voice)
-    if success:
-        response = make_response(send_file(out, mimetype="audio/wav"))
-        response.headers['Content-Type'] = 'audio/wav'
+    
+    try:
+        # Get the model from loaded_models
+        model = loaded_models[voice]['model']
+        
+        # Preprocess text if preprocessor exists
+        if loaded_models[voice]['preprocessor']:
+            text = loaded_models[voice]['preprocessor'](text)
+        else:
+            text = universal_text_normalize(text)
+            
+        
+        # Synthesize
+        audio_buffer = model.synthesize(text)
+        
+        # Create response
+        response = make_response(send_file(
+            audio_buffer,
+            mimetype="audio/wav",
+            as_attachment=True,
+            download_name="synthesized.wav"
+        ))
         return response
-    else:
-        return error_response(detail, 500)
+        
+    except Exception as e:
+        logging.error(f"Synthesis error: {str(e)}")
+        return error_response("Failed to synthesize audio", 500)
 
 # # Endpoint that uses long_synthesize. Returns mp3 or uploads to given cloud URL
 @app.route("/api/long", methods=["POST"])

@@ -18,6 +18,7 @@ ACRONYMS = {line.split(',')[0]: line.split(',')[1].strip() for line in open(os.p
 UNITS = {line.split(',')[0]: line.split(',')[1].strip() for line in open(os.path.join(current_dir, 'units.csv'))}
 
 PUNCLIST = [';', '?', '¿', ',', ':', '.', '!', '¡']
+ENDING_PUNCTUATION = ["?", ".", "!"]
 URL_PATTERN = re.compile(r'^(https?://|www\.)\S+', re.IGNORECASE)
 ALLOWED_IN_NUMERICAL = [',', '.', '/']
 
@@ -226,6 +227,9 @@ def text_preprocess(text):
 
         new_segs.append(' '.join(new_seg_tokens))
 
+    #Add a full stop if there's no ending punctuation in the end
+    if not puncs or puncs[-1] not in ENDING_PUNCTUATION:
+        puncs.append('.')
 
     return merge_punc(new_segs,puncs)
 
