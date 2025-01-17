@@ -8,6 +8,8 @@ from typing import List
 from TTS.config import load_config
 from utils.utils import style_wav_uri_to_dict, universal_text_normalize, parse_sents
 from utils.model_loader import read_config, load_models
+from utils.exceptions import ConfigurationError
+from utils.config_validator import validate_config
 from pydub import AudioSegment
 import tempfile
 import json
@@ -39,7 +41,15 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
 #Load config and models
-config_data = read_config(CONFIG_JSON_PATH)
+try:
+    config_data = read_config(CONFIG_JSON_PATH)
+    validate_config(config_data)
+except ConfigurationError as e:
+    logging.error(f"Configuration error: {e}")
+    raise
+except Exception as e:
+    logging.error(f"Error reading config: {e}")
+    raise
 loaded_models, default_model_ids = load_models(config_data, MODELS_ROOT, USE_CUDA)
 
 logging.info(f"USE_CUDA: {USE_CUDA}")
@@ -181,50 +191,50 @@ def check(voice=None, lang=None):
 # Simple TTS endpoint. Gets plain text as input and returns WAV. (Not used by Gateway)
 @app.route("/api/short", methods=["POST"])
 def tts():
-    data = request.get_json()
-    if not data:
-        return error_response("No data provided", 400)
-    
-    text = data.get('text')
-    voice = data.get('voice')
-    lang = data.get('lang')
-
-    if not text:
-        return error_response("Text must not be empty", 400)
-
-    result = check(voice, lang)
-    result_info = json.loads(result.data.decode('utf-8'))
-    if result.status_code != 200:
-        return error_response(result_info['message'], result.status_code)
-    
-    voice = result_info['voice']
-    
     try:
-        # Get the model from loaded_models
-        model = loaded_models[voice]['model']
+        data = request.get_json()
+        if not data:
+            return error_response("No data provided", 400)
         
-        # Preprocess text if preprocessor exists
-        if loaded_models[voice]['preprocessor']:
-            text = loaded_models[voice]['preprocessor'](text)
-        else:
-            text = universal_text_normalize(text)
+        text = data.get('text')
+        voice = data.get('voice')
+        lang = data.get('lang')
+
+        if not text:
+            return error_response("Text must not be empty", 400)
+
+        result = check(voice, lang)
+        result_info = json.loads(result.data.decode('utf-8'))
+        if result.status_code != 200:
+            return error_response(result_info['message'], result.status_code)
+        
+        voice = result_info['voice']
+        
+        try:
+            model = loaded_models[voice]['model']
             
-        
-        # Synthesize
-        audio_buffer = model.synthesize(text)
-        
-        # Create response
-        response = make_response(send_file(
-            audio_buffer,
-            mimetype="audio/wav",
-            as_attachment=True,
-            download_name="synthesized.wav"
-        ))
-        return response
-        
+            if loaded_models[voice]['preprocessor']:
+                text = loaded_models[voice]['preprocessor'](text)
+            else:
+                text = universal_text_normalize(text)
+            
+            audio_buffer = model.synthesize(text)
+            
+            response = make_response(send_file(
+                audio_buffer,
+                mimetype="audio/wav",
+                as_attachment=True,
+                download_name="synthesized.wav"
+            ))
+            return response
+            
+        except SynthesisError as e:
+            logging.error(f"Synthesis error: {str(e)}")
+            return error_response("Failed to synthesize audio", 500)
+            
     except Exception as e:
-        logging.error(f"Synthesis error: {str(e)}")
-        return error_response("Failed to synthesize audio", 500)
+        logging.error(f"Unexpected error in tts endpoint: {str(e)}")
+        return error_response("Internal server error", 500)
 
 # # Endpoint that uses long_synthesize. Returns mp3 or uploads to given cloud URL
 @app.route("/api/long", methods=["POST"])
