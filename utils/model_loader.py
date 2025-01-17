@@ -13,12 +13,6 @@ DEFAULT_FRAMERATE = 22050
 
 logger = logging.getLogger(__name__)
 
-def read_config(config_file):
-    """Read JSON format configuration file"""
-    with open(config_file, "r") as jsonfile: 
-        data = json.load(jsonfile) 
-        logger.info("Config Read successful") 
-    return data
 
 def load_lang_preprocessor(lang, preprocessor_module_name=DEFAULT_PREPROCESSOR_MODULE):
     try:
@@ -29,13 +23,14 @@ def load_lang_preprocessor(lang, preprocessor_module_name=DEFAULT_PREPROCESSOR_M
         logger.error(f"Couldn't load preprocessor {preprocessor_module_name} for lang {lang}")
         return None
 
-def load_models(config_data: dict, models_root: str, use_cuda: bool = False):
+def load_models(model_configs: list, models_root: str, use_cuda: bool = False, languages: dict = None):
     try:
         loaded_models = {}
         default_model_ids = {}
         
-        for model_config in config_data['models']:
+        for model_config in model_configs:
             model_id = model_config['voice']
+            model_lang = model_config['lang']  # Store language code here
             
             if not model_config.get('load', False):
                 continue
@@ -46,22 +41,21 @@ def load_models(config_data: dict, models_root: str, use_cuda: bool = False):
                 
                 if not model.load_model():
                     raise ModelLoadError(f"Failed to load model {model_id}")
-                    
+                
                 loaded_models[model_id] = {
                     'model': model,
-                    'lang': model_config['lang'],
+                    'lang': model_lang,
                     'voice': model_id,
-                    'language': config_data['languages'].get(model_config['lang']),
+                    'language': languages.get(model_lang) if languages else None,
                     'preprocessor': load_lang_preprocessor(
-                        model_config['lang'],
+                        model_lang,
                         model_config.get('preprocessor', 'preprocessor')
                     ),
                     'framerate': model.sample_rate
                 }
                 
-                if (model_config.get('default_for_lang', False) or 
-                    model_config['lang'] not in default_model_ids):
-                    default_model_ids[model_config['lang']] = model_id
+                if model_lang not in default_model_ids:
+                    default_model_ids[model_lang] = model_id
                     
                 logging.info(f"Successfully loaded model {model_id}")
                 

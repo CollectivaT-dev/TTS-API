@@ -1,105 +1,6 @@
 {
-    "languages":{"en":"English", "es":"Spanish", "tr":"Turkish", "lad":"Ladino", "ca":"Catalan", "gl":"Galician"},
+    "languages":{"en":"English", "ca":"Catalan", "rmz":"Marma"},
     "models": [
-        {
-            "voice": "galotron-sabela",
-            "lang": "gl",
-            "model_type": "coqui",
-            "tts_config_path": "gl/vits_config.json",
-            "tts_model_path": "gl/vits_best_model_52125.pth",
-            "load": false
-        },
-        {
-            "voice": "sabela-morph",
-            "lang": "gl",
-            "model_type": "coqui",
-            "tts_config_path": "gl/vits_config.json",
-            "tts_model_path": "gl/vits_best_model_52125.pth",
-            "load": false
-        },
-        {
-            "voice": "sabela-phon",
-            "lang": "gl",
-            "model_type": "coqui",
-            "tts_config_path": "gl/vits-phoneme-config.json",
-            "tts_model_path": "gl/vits-phoneme-best_model_51375.pth",
-            "load": false
-        },
-        {
-            "voice": "sabela-phon-accent",
-            "lang": "gl",
-            "model_type": "coqui",
-            "tts_config_path": "gl/vits-phoneme-accented_config.json",
-            "tts_model_path": "gl/vits-phoneme-accented_best_model_36375.pth",
-            "load": false
-        },
-	    {
-            "voice": "sabela-vits_transfer-tra3",
-            "lang": "gl",
-            "model_type": "coqui",
-            "tts_config_path": "gl/vits-phoneme-transfer-config.json",
-            "tts_model_path": "gl/vits-phoneme-transfer-best_model_1004501.pth",
-            "load": false
-        },
-        
-        {
-            "voice": "sabela-vits-tra3commafix",
-            "lang": "gl",
-            "model_type": "coqui",
-            "tts_config_path": "gl/vits-phoneme-tra3commafix_config.json",
-            "tts_model_path": "gl/vits-phoneme-tra3commafix_best_model_57828.pth",
-            "load": false
-        },
-        {
-            "voice": "sabela-fast-tra3-hifigan",
-            "lang": "gl",
-            "model_type": "coqui",
-            "tts_config_path": "gl/fast-pitch_config.json",
-            "tts_model_path": "gl/fast-pitch_best_model_362340.pth",
-            "vocoder_config_path": "/Users/alp/Library/Application Support/TTS/vocoder_models--en--ljspeech--hifigan_v2/config.json",
-            "vocoder_model_path": "/Users/alp/Library/Application Support/TTS/vocoder_models--en--ljspeech--hifigan_v2/model_file.pth",
-            "load": false
-        },
-        {
-            "voice": "ona-vits",
-            "lang": "ca",
-            "model_type": "coqui",
-            "tts_config_path": "ca/vits_config.json",
-            "tts_model_path": "ca/vits_best_model_1003724.pth",
-            "load": false
-        },
-        {
-            "voice": "karen",
-            "lang": "lad",
-            "model_type": "coqui",
-            "tts_config_path": "lad/eng_lad_v2_config.json",
-            "tts_model_path": "lad/eng_lad_v2_checkpoint_770000.pth",
-            "load": false
-        },
-        {
-            "voice": "pau",
-            "lang": "ca",
-            "model_type": "coqui",
-            "tts_config_path": "config_pau_speedy_speech_fix.json",
-            "tts_model_path": "upc_pau_coqui_speedy_speech.pth.tar",
-            "load": false
-        },
-        {
-            "voice": "ona-glow",
-            "lang": "ca",
-            "model_type": "coqui",
-            "tts_config_path": "ca/catotron_glowtts_config.json",
-            "tts_model_path": "ca/catotron_glowtts_checkpoint_400000.pth",
-            "load": false
-        },
-        {
-            "voice": "ona-glowfull",
-            "lang": "ca",
-            "model_type": "coqui",
-            "tts_config_path": "ca/catotron_glowtts_fullona_config.json",
-            "tts_model_path": "ca/catotron_glowtts_fullona_checkpoint_410000.pth",
-            "load": false
-        },
         {
             "voice": "catotron-ona",
             "lang": "ca",
@@ -111,32 +12,11 @@
             "load": true
         },
         {
-            "voice": "ona-fast-onavoc",
-            "lang": "ca",
-            "model_type": "coqui",
-            "tts_config_path": "ca/fast-speech_config.json",
-            "tts_model_path": "ca/fast-speech_best_model.pth",
-            "vocoder_config_path": "ca/onavoc_config.json",
-            "vocoder_model_path": "ca/onavoc_best_model_26136.pth",
-            "load": false
-        },
-        {
-            "voice": "ona-vits-fromCV",
-            "lang": "ca",
-            "model_type": "coqui",
-            "tts_config_path": "ca/vits_fromCV_config.json",
-            "tts_model_path": "ca/vits_fromCV_best_model_761185.pth",
-            "load": false
-        },
-        {
-            "voice": "ljspeech",
-            "lang": "en",
-            "model_type": "coqui",
-            "tts_config_path": "/Users/alp/Library/Application Support/tts/tts_models--en--ljspeech--glow-tts/config.json",
-            "tts_model_path": "/Users/alp/Library/Application Support/tts/tts_models--en--ljspeech--glow-tts/model_file.pth",
-            "vocoder_model_path": "/Users/alp/Library/Application Support/TTS/vocoder_models--en--ljspeech--multiband-melgan/model_file.pth",
-            "vocoder_config_path": "/Users/alp/Library/Application Support/TTS/vocoder_models--en--ljspeech--multiband-melgan/config.json",
-            "load": false
+            "voice": "marma-mms",
+            "lang": "rmz",
+            "model_type": "mms",
+            "base_model_path": "rmz",
+            "load": true
         }
     ]
 }

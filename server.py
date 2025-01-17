@@ -7,7 +7,8 @@ from flask import Flask, render_template, request, send_file, jsonify, make_resp
 from typing import List
 from TTS.config import load_config
 from utils.utils import style_wav_uri_to_dict, universal_text_normalize, parse_sents
-from utils.model_loader import read_config, load_models
+from utils.config_manager import ConfigManager
+from utils.model_loader import load_models
 from utils.exceptions import ConfigurationError
 from utils.config_validator import validate_config
 from pydub import AudioSegment
@@ -40,20 +41,28 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
-#Load config and models
+# Initialize config and load models
 try:
-    config_data = read_config(CONFIG_JSON_PATH)
-    validate_config(config_data)
+    config_manager = ConfigManager(CONFIG_JSON_PATH)
+    loaded_models, default_model_ids = load_models(
+        config_manager.models,  
+        config_manager.models_root,  
+        config_manager.use_cuda(),
+        config_manager.languages 
+    )
 except ConfigurationError as e:
     logging.error(f"Configuration error: {e}")
     raise
 except Exception as e:
-    logging.error(f"Error reading config: {e}")
+    logging.error(f"Error loading models: {e}")
     raise
-loaded_models, default_model_ids = load_models(config_data, MODELS_ROOT, USE_CUDA)
 
-logging.info(f"USE_CUDA: {USE_CUDA}")
-logging.info("MODELS: " + ', '.join([f'{m} ({loaded_models[m]["lang"]})' if default_model_ids[loaded_models[m]["lang"]] == m else f'{m}' for m in loaded_models]))
+logging.info(f"USE_CUDA: {config_manager.use_cuda()}")
+logging.info("MODELS: " + ', '.join([
+    f'{m} ({loaded_models[m]["lang"]})' 
+    if default_model_ids[loaded_models[m]["lang"]] == m 
+    else f'{m}' for m in loaded_models
+]))
 
 #Standard responses
 def error_response(message, status_code):
