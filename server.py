@@ -7,20 +7,32 @@ from flask import Flask, render_template, request, send_file, jsonify, make_resp
 from typing import List
 from TTS.config import load_config
 from utils.utils import style_wav_uri_to_dict, universal_text_normalize, parse_sents
-from utils.model_loader import read_config, load_models
+from utils.config_manager import ConfigManager
+from utils.model_loader import load_models
+from utils.exceptions import ConfigurationError
+from utils.config_validator import validate_config
 from pydub import AudioSegment
 import tempfile
 import json
 
-app = Flask(__name__)
-
-#Read environment variables
+#Environment variables
 MODELS_ROOT = 'models'
 CONFIG_JSON_PATH = os.getenv('TTS_API_CONFIG', 'config.json')
 LOG_DIR = os.getenv('TTS_LOG_DIR', 'logs') 
 LOG_PATH = os.getenv('TTS_LOG_PATH', 'app.log') 
 USE_CUDA = True if os.getenv('USE_CUDA')=="1" else False
 COQUI_CONFIG_JSON_PATH = "coqui-models.json"
+ROOT_PATH = os.environ.get('ROOT_PATH', '')
+
+# Root path setup
+if ROOT_PATH:
+    ROOT_PATH = '/' + ROOT_PATH
+
+app = Flask(__name__, static_url_path=ROOT_PATH + '/static')
+
+@app.context_processor
+def utility_processor():
+    return dict(root_path=ROOT_PATH)
 
 #Constants
 LONG_SILENCE_SEGMENT = AudioSegment.silent(duration=500)
@@ -38,12 +50,33 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
-#Load config and models
-config_data = read_config(CONFIG_JSON_PATH)
-loaded_models, default_model_ids = load_models(config_data, MODELS_ROOT, USE_CUDA)
+# Initialize config and load models
+try:
+    config_manager = ConfigManager(CONFIG_JSON_PATH)
+    
+    loaded_models, default_model_ids = {}, {}
+    if config_manager.models:
+        loaded_models, default_model_ids = load_models(
+            config_manager.models,  
+            config_manager.models_root,  
+            config_manager.use_cuda(),
+            config_manager.languages 
+        )
+    logging.info(f"Loaded {len(loaded_models)} models")
 
-logging.info(f"USE_CUDA: {USE_CUDA}")
-logging.info("MODELS: " + ', '.join([f'{m} ({loaded_models[m]["lang"]})' if default_model_ids[loaded_models[m]["lang"]] == m else f'{m}' for m in loaded_models]))
+except ConfigurationError as e:
+    logging.error(f"Configuration error: {e}")
+    loaded_models, default_model_ids = {}, {}
+except Exception as e:
+    logging.error(f"Startup error: {e}")
+    loaded_models, default_model_ids = {}, {}
+
+logging.info(f"USE_CUDA: {config_manager.use_cuda()}")
+logging.info("MODELS: " + ', '.join([
+    f'{m} ({loaded_models[m]["lang"]})' 
+    if default_model_ids[loaded_models[m]["lang"]] == m 
+    else f'{m}' for m in loaded_models
+]))
 
 #Standard responses
 def error_response(message, status_code):
@@ -54,67 +87,40 @@ def success_response(data, status_code=200):
     """Return a JSON data and HTTP status code."""
     return make_response(jsonify(data), status_code)
 
-# synthesize
-# Preprocesses text using language specific preprocessor and then universal normalizer and sends to TTS
-def synthesize(text:str, voice:str):
-    out = 0
-    success = 0
-    detail = "success"
-
-    #Preprocess text with language specific preprocessor
-    if loaded_models[voice]['preprocessor']:
-        text = loaded_models[voice]['preprocessor'](text)
-        
-    #Normalize text with universal normalizer
-    text = universal_text_normalize(text)
-
-    # logging.info(f"Preprocessed text: {text}")
-
-    if not text:
-        logging.warning(f"Invalid text for synthesis")
-        detail = "Invalid text for synthesis"
-        return out, success, detail
-
-    try:
-        #wavs = loaded_models[voice]['synthesizer'].tts(preprocessed_text, speaker_name=speaker_idx, style_wav=style_wav)
-        wavs = loaded_models[voice]['synthesizer'].tts(text)
-        out = io.BytesIO()
-        loaded_models[voice]['synthesizer'].save_wav(wavs, out)
-        success = 1
-    except Exception as e:
-        detail = str(e)
-
-    return out, success, detail
-
 # long_synthesize
-# Synthesizes each paragraph with a long pause in between. 
+# Synthesizes each paragraph with a pause in between. 
 # Each sentence in paragraph is synthesized with method synthesize and merged with a short pause in between
-def long_synthesize(text_paragraphs:List[str], voice:str):
+def long_synthesize(text_paragraphs: List[str], voice: str):
     framerate = loaded_models[voice]['framerate']
+    model = loaded_models[voice]['model']
+    preprocessor = loaded_models[voice]['preprocessor']
+    
     allsound = AudioSegment.empty()
-
-    allsound += LONG_SILENCE_SEGMENT #initial silence
+    allsound += LONG_SILENCE_SEGMENT  # initial silence
 
     for paragraph in text_paragraphs:
         segments = parse_sents(paragraph)
         for s in segments:
-            audiobytes, success, detail = synthesize(text=s, voice=voice)
-        
-            if success:
+            try:
+                if preprocessor:
+                    s = preprocessor(s)
+                else:
+                    #Normalize text with universal normalizer
+                    s = universal_text_normalize(s)
+                
+                audiobytes = model.synthesize(s)
+                
+                # Skip WAV header (first 1024 bytes) to avoid clicking
                 sound = AudioSegment(
-                    # raw audio data (bytes)
-                    data=audiobytes.getvalue()[1024:],
-                    # 2 byte (16 bit) samples
+                    data=audiobytes.getvalue()[1024:],  # Skip WAV header
                     sample_width=2,
-                    # 16 kHz frame rate
-                    frame_rate=framerate, 
-                    # mono
+                    frame_rate=framerate,
                     channels=1
                 )
 
                 allsound += sound + SHORT_SILENCE_SEGMENT
-            else:
-                logging.warning(f"Couldn't synthesize segment |{s}|. Reason: {detail}")
+            except Exception as e:
+                logging.warning(f"Couldn't synthesize segment |{s}|. Reason: {str(e)}")
 
         allsound += LONG_SILENCE_SEGMENT
 
@@ -208,31 +214,50 @@ def check(voice=None, lang=None):
 # Simple TTS endpoint. Gets plain text as input and returns WAV. (Not used by Gateway)
 @app.route("/api/short", methods=["POST"])
 def tts():
-    data = request.get_json()
-    if not data:
-        return error_response("No data provided", 400)
-    
-    text = data.get('text')
-    voice = data.get('voice')
-    lang = data.get('lang')
+    try:
+        data = request.get_json()
+        if not data:
+            return error_response("No data provided", 400)
+        
+        text = data.get('text')
+        voice = data.get('voice')
+        lang = data.get('lang')
 
-    if not text:
-        return error_response("Text must not be empty", 400)
+        if not text:
+            return error_response("Text must not be empty", 400)
 
-    result = check(voice, lang)
-    result_info = json.loads(result.data.decode('utf-8'))
-    if result.status_code != 200:
-        return error_response(result_info['message'], result.status_code)
-    
-    voice = result_info['voice']
-
-    out, success, detail = synthesize(text, voice)
-    if success:
-        response = make_response(send_file(out, mimetype="audio/wav"))
-        response.headers['Content-Type'] = 'audio/wav'
-        return response
-    else:
-        return error_response(detail, 500)
+        result = check(voice, lang)
+        result_info = json.loads(result.data.decode('utf-8'))
+        if result.status_code != 200:
+            return error_response(result_info['message'], result.status_code)
+        
+        voice = result_info['voice']
+        
+        try:
+            model = loaded_models[voice]['model']
+            
+            if loaded_models[voice]['preprocessor']:
+                text = loaded_models[voice]['preprocessor'](text)
+            else:
+                text = universal_text_normalize(text)
+            
+            audio_buffer = model.synthesize(text)
+            
+            response = make_response(send_file(
+                audio_buffer,
+                mimetype="audio/wav",
+                as_attachment=True,
+                download_name="synthesized.wav"
+            ))
+            return response
+            
+        except SynthesisError as e:
+            logging.error(f"Synthesis error: {str(e)}")
+            return error_response("Failed to synthesize audio", 500)
+            
+    except Exception as e:
+        logging.error(f"Unexpected error in tts endpoint: {str(e)}")
+        return error_response("Internal server error", 500)
 
 # # Endpoint that uses long_synthesize. Returns mp3 or uploads to given cloud URL
 @app.route("/api/long", methods=["POST"])

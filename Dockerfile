@@ -1,28 +1,23 @@
-FROM python:3.7.9-slim-buster
+FROM python:3.11.11-slim-bookworm
 
-# Project setup
+# Install system dependencies and Rust
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    libsndfile1 \
+    ffmpeg \
+    curl \
+    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV VIRTUAL_ENV=/opt/venv
-
-RUN apt-get update \
-    && apt-get install gcc g++ mecab libmecab-dev mecab-ipadic-utf8 libsndfile1 -y \
-    && apt-get install libasound2 libc6 libgcc1 libstdc++6 -y \
-    && apt-get install --no-install-recommends -y ffmpeg \
-    && apt-get clean
-
-RUN python -m venv "$VIRTUAL_ENV"
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN pip install  --quiet --upgrade pip && \
-    pip install  --quiet pip-tools
-
-COPY . /app
-
-RUN pip install -r /app/requirements.txt \
-    && rm -rf /root/.cache/pip
+# Add Rust to PATH
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 WORKDIR /app
+COPY . /app
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt && \
+    python nltk_pkg.py
 
 ENV PYTHONUNBUFFERED=1
-
-COPY ./nltk_pkg.py /app/nltk_pkg.py
-RUN python /app/nltk_pkg.py
