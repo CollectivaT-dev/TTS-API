@@ -15,15 +15,24 @@ from pydub import AudioSegment
 import tempfile
 import json
 
-app = Flask(__name__)
-
-#Read environment variables
+#Environment variables
 MODELS_ROOT = 'models'
 CONFIG_JSON_PATH = os.getenv('TTS_API_CONFIG', 'config.json')
 LOG_DIR = os.getenv('TTS_LOG_DIR', 'logs') 
 LOG_PATH = os.getenv('TTS_LOG_PATH', 'app.log') 
 USE_CUDA = True if os.getenv('USE_CUDA')=="1" else False
 COQUI_CONFIG_JSON_PATH = "coqui-models.json"
+ROOT_PATH = os.environ.get('ROOT_PATH', '')
+
+# Root path setup
+if ROOT_PATH:
+    ROOT_PATH = '/' + ROOT_PATH
+
+app = Flask(__name__, static_url_path=ROOT_PATH + '/static')
+
+@app.context_processor
+def utility_processor():
+    return dict(root_path=ROOT_PATH)
 
 #Constants
 LONG_SILENCE_SEGMENT = AudioSegment.silent(duration=500)
@@ -44,18 +53,23 @@ logger.addHandler(stream_handler)
 # Initialize config and load models
 try:
     config_manager = ConfigManager(CONFIG_JSON_PATH)
-    loaded_models, default_model_ids = load_models(
-        config_manager.models,  
-        config_manager.models_root,  
-        config_manager.use_cuda(),
-        config_manager.languages 
-    )
+    
+    loaded_models, default_model_ids = {}, {}
+    if config_manager.models:
+        loaded_models, default_model_ids = load_models(
+            config_manager.models,  
+            config_manager.models_root,  
+            config_manager.use_cuda(),
+            config_manager.languages 
+        )
+    logging.info(f"Loaded {len(loaded_models)} models")
+
 except ConfigurationError as e:
     logging.error(f"Configuration error: {e}")
-    raise
+    loaded_models, default_model_ids = {}, {}
 except Exception as e:
-    logging.error(f"Error loading models: {e}")
-    raise
+    logging.error(f"Startup error: {e}")
+    loaded_models, default_model_ids = {}, {}
 
 logging.info(f"USE_CUDA: {config_manager.use_cuda()}")
 logging.info("MODELS: " + ', '.join([

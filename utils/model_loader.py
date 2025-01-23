@@ -29,13 +29,14 @@ def load_models(model_configs: list, models_root: str, use_cuda: bool = False, l
         default_model_ids = {}
         
         for model_config in model_configs:
-            model_id = model_config['voice']
-            model_lang = model_config['lang']  # Store language code here
-            
-            if not model_config.get('load', False):
-                continue
-                
             try:
+                model_id = model_config['voice']
+                model_lang = model_config['lang']  # Store language code here
+                
+                if not model_config.get('load', False):
+                    continue
+                    
+                
                 model_config['use_cuda'] = use_cuda
                 model = TTSModelFactory.create_model(model_config)
                 
