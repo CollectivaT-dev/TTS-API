@@ -7,9 +7,9 @@ This is a simple Text-to-speech (TTS) REST API based on the 🐸 [Coqui TTS demo
 - Easy docker installation
 - CPU and GPU compatibility
 - Modular and language specific text normalization 
-- (Future) Multi-system support	
+- Multi-system support	
 	- Coqui TTS
-	- Larynx (coming soon)
+ 	- Meta MMS (Huggingface)
 	
 ## Demo
 
